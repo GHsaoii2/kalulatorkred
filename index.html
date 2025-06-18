@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Kredytu Hipotecznego - Twój Raport</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+        }
+        .section-title {
+            color: #1d3557;
+            border-bottom: 2px solid #a8dadc;
+        }
+        .card {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .kpi-value {
+            color: #1d3557;
+        }
+        .kpi-label {
+            color: #6c757d;
+        }
+        .progress-bar-fill {
+            background-color: #457b9d;
+        }
+        .positive { color: #2a9d8f; }
+        .negative { color: #e63946; }
+        .neutral { color: #6c757d; }
+
+        /* Custom styles for pie chart simulation using conic-gradient */
+        .pie-chart-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: #e0e0e0; /* Fallback */
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        /* Responsive adjustments for tables to become "cards" on small screens */
+        @media (max-width: 768px) {
+            .responsive-table table, 
+            .responsive-table thead, 
+            .responsive-table tbody, 
+            .responsive-table th, 
+            .responsive-table td, 
+            .responsive-table tr {
+                display: block;
+            }
+            .responsive-table thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            .responsive-table tr { border: 1px solid #dee2e6; margin-bottom: 1rem; border-radius: 0.5rem; }
+            .responsive-table td {
+                border: none;
+                border-bottom: 1px solid #eee;
+                position: relative;
+                padding-left: 50%;
+                text-align: right;
+            }
+            .responsive-table td:last-child { border-bottom: none; }
+            .responsive-table td:before {
+                position: absolute;
+                top: 0;
+                left: 6px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: 600;
+                color: #495057;
+            }
+            /* Data-title attributes for table headers on mobile */
+            .responsive-table td:nth-of-type(1):before { content: attr(data-title); }
+            .responsive-table td:nth-of-type(2):before { content: attr(data-title); }
+            .responsive-table td:nth-of-type(3):before { content: attr(data-title); }
+            .responsive-table td:nth-of-type(4):before { content: attr(data-title); }
+            .responsive-table td:nth-of-type(5):before { content: attr(data-title); }
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-[#1d3557] to-[#457b9d] text-white p-6 md:p-8 text-center">
+            <h1 class="text-2xl md:text-3xl font-bold">Kalkulator Kredytu Hipotecznego</h1>
+            <p class="text-md md:text-lg mt-2 opacity-90">Szybko sprawdź wpływ zmian na Twoje finanse.</p>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="p-4 md:p-8">
+            <!-- Calculator Section -->
+            <section class="mb-8">
+                <h2 class="text-xl md:text-2xl font-semibold pb-2 mb-6 section-title">
+                    &#128187; Kalkulator Kredytowy
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="flex flex-col">
+                        <label for="loanAmount" class="text-sm font-medium text-gray-700 mb-1">Kwota kredytu (zł):</label>
+                        <input type="number" id="loanAmount" value="782596.00" class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="initialLoanAmount" class="text-sm font-medium text-gray-700 mb-1">Początkowa kwota kredytu (zł):</label>
+                        <input type="number" id="initialLoanAmount" value="850000.00" class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="monthsRemaining" class="text-sm font-medium text-gray-700 mb-1">Okres kredytowania (miesiące):</label>
+                        <input type="number" id="monthsRemaining" value="351" class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="margin" class="text-sm font-medium text-gray-700 mb-1">Marża banku (%):</label>
+                        <input type="number" id="margin" value="2.09" step="0.01" class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="wiborRate" class="text-sm font-medium text-gray-700 mb-1">Stawka WIBOR 3M (%):</label>
+                        <input type="number" id="wiborRate" value="5.21" step="0.01" class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="currentInstallment" class="text-sm font-medium text-gray-700 mb-1">Twoja obecna rata (zł):</label>
+                        <input type="number" id="currentInstallment" value="5403.34" step="0.01" class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <button id="calculateBtn" class="mt-8 w-full md:w-auto bg-[#2a9d8f] hover:bg-[#218d80] text-white font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out shadow-md hover:shadow-lg">
+                    Oblicz!
+                </button>
+            </section>
+
+            <!-- Key Performance Indicators (KPIs) -->
+            <section class="mb-8">
+                <h2 class="text-xl md:text-2xl font-semibold pb-2 mb-6 section-title">
+                    &#128202; Kluczowe Wskaźniki
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="kpiDisplay">
+                    <!-- KPIs will be injected here by JavaScript -->
+                    <div class="card p-5 rounded-lg text-center">
+                        <span class="text-gray-600 text-sm kpi-label">&#128200; Aktualny WIBOR 3M</span>
+                        <p class="text-2xl font-bold kpi-value" id="displayWibor">--</p>
+                    </div>
+                    <div class="card p-5 rounded-lg text-center">
+                        <span class="text-gray-600 text-sm kpi-label">&#128197; Twoja Obecna Rata</span>
+                        <p class="text-2xl font-bold kpi-value" id="displayCurrentInstallment">--</p>
+                    </div>
+                    <div class="card p-5 rounded-lg text-center">
+                        <span class="text-gray-600 text-sm kpi-label">&#128176; Szacowana Nowa Rata</span>
+                        <p class="text-2xl font-bold kpi-value" id="displayNewInstallment">--</p>
+                    </div>
+                    <div class="card p-5 rounded-lg text-center">
+                        <span class="text-gray-600 text-sm kpi-label">&#9878; Różnica w Raty</span>
+                        <p class="text-2xl font-bold" id="displayInstallmentDiff">--</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Progress and Structure -->
+            <section class="mb-8">
+                <h2 class="text-xl md:text-2xl font-semibold pb-2 mb-6 section-title">
+                    &#128663; Postęp Spłaty Kredytu
+                </h2>
+                <div class="card p-6 rounded-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700 text-sm">
+                        <div class="font-medium">Kapitał początkowy: <span id="displayInitialLoanAmount" class="font-normal text-gray-900">--</span> zł</div>
+                        <div class="font-medium">Kapitał spłacony: <span id="displayCapitalPaid" class="font-normal text-gray-900">--</span> zł</div>
+                        <div class="font-medium">Pozostało do spłaty: <span id="displayLoanAmount" class="font-normal text-gray-900">--</span> zł</div>
+                    </div>
+                    <p class="mt-4 text-sm text-gray-600">
+                        <span class="font-bold" id="displayCapitalPaidPercent">--</span> Twojego kapitału spłacono!
+                    </p>
+                    <div class="w-full bg-gray-200 rounded-full h-6 mt-2 overflow-hidden">
+                        <div class="h-full rounded-full text-white text-xs flex items-center justify-center transition-all duration-500 ease-out progress-bar-fill" style="width: 0%;" id="progressBar">
+                            0%
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-xl md:text-2xl font-semibold pb-2 mb-6 section-title">
+                    &#128300; Struktura Najbliższej Raty
+                </h2>
+                <div class="card p-6 rounded-lg flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-8">
+                    <div class="pie-chart-placeholder" id="pieChart"></div>
+                    <div>
+                        <p class="text-gray-700 text-sm mb-2"><span class="inline-block w-3 h-3 rounded-full bg-[#1d3557] mr-2"></span><b class="text-gray-900">Odsetki:</b> <span id="displayInterestPart">--</span> zł (<span id="displayInterestPercent">--</span>%)</p>
+                        <p class="text-gray-700 text-sm"><span class="inline-block w-3 h-3 rounded-full bg-[#a8dadc] mr-2"></span><b class="text-gray-900">Kapitał:</b> <span id="displayPrincipalPart">--</span> zł (<span id="displayPrincipalPercent">--</span>%)</p>
+                        <p class="mt-4 text-lg font-bold text-gray-800">Całkowita rata: <span id="displayTotalInstallment">--</span> zł</p>
+                        <p class="mt-2 text-sm text-gray-600">Całkowita kwota do spłaty: <span id="displayTotalPaid">--</span> zł</p>
+                        <p class="text-sm text-gray-600">Całkowite odsetki: <span id="displayTotalInterest">--</span> zł</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Amortization Schedule Section -->
+            <section class="mb-8">
+                <h2 class="text-xl md:text-2xl font-semibold pb-2 mb-6 section-title">
+                    &#128196; Harmonogram Spłat Kredytu
+                </h2>
+                <div class="card p-6 rounded-lg">
+                    <div class="mb-4">
+                        <label for="overpaymentAmount" class="text-sm font-medium text-gray-700 mb-1">Kwota nadpłaty (zł, jednorazowo):</label>
+                        <input type="number" id="overpaymentAmount" value="0" step="0.01" class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full">
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-sm font-medium text-gray-700 mb-2">Wpływ nadpłaty:</p>
+                        <div class="flex items-center space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="overpaymentEffect" value="reduceMonths" checked class="form-radio text-blue-600">
+                                <span class="ml-2 text-gray-700">Skróć okres</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="overpaymentEffect" value="reduceInstallment" class="form-radio text-blue-600">
+                                <span class="ml-2 text-gray-700">Zmniejsz ratę</span>
+                            </label>
+                        </div>
+                    </div>
+                    <button id="simulateOverpaymentBtn" class="bg-[#457b9d] hover:bg-[#3a6b8b] text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out shadow-md">
+                        Symuluj Nadpłatę
+                    </button>
+
+                    <div id="overpaymentResults" class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200 hidden">
+                        <p class="text-lg font-semibold text-blue-800 mb-2">Wyniki symulacji:</p>
+                        <p id="overpaymentSummary" class="text-gray-700"></p>
+                        <p class="text-gray-700 mt-2">Całkowite oszczędności na odsetkach: <span id="totalInterestSavings" class="font-bold text-green-700"></span> zł</p>
+                    </div>
+
+                    <div class="overflow-x-auto mt-6">
+                        <table class="w-full text-sm text-left text-gray-500 responsive-table" id="amortizationTable">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Miesiąc</th>
+                                    <th scope="col" class="px-6 py-3">Saldo początkowe</th>
+                                    <th scope="col" class="px-6 py-3">Część odsetkowa</th>
+                                    <th scope="col" class="px-6 py-3">Część kapitałowa</th>
+                                    <th scope="col" class="px-6 py-3">Rata</th>
+                                    <th scope="col" class="px-6 py-3">Saldo końcowe</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Amortization schedule rows will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <button id="toggleAmortizationTable" class="mt-4 w-full text-[#457b9d] hover:text-[#3a6b8b] font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
+                        Pokaż pełny harmonogram (pierwsze 12 rat)
+                    </button>
+                </div>
+                <div class="chart-placeholder mt-4 p-4 rounded-lg">
+                    <p class="text-gray-600">Wykres: Rozkład raty na kapitał i odsetki w czasie (wymaga biblioteki Chart.js)</p>
+                    <img src="https://placehold.co/600x300/f8f9fa/1d3557?text=WYKRES%20AMORTYZACJI" alt="Wykres Amortyzacji" class="w-full h-auto rounded-md">
+                </div>
+            </section>
+
+            <!-- Static Sections from Email -->
+            <section class="mb-8 responsive-table">
+                <h2 class="text-xl md:text-2xl font-semibold pb-2 mb-6 section-title">
+                    &#128197; Historia WIBOR 3M
+                </h2>
+                <div class="card p-6 rounded-lg">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Data</th>
+                                <th scope="col" class="px-6 py-3">WIBOR 3M (%)</th>
+                                <th scope="col" class="px-6 py-3">Zmiana</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-white border-b">
+                                <td data-title="Data" class="px-6 py-4">2025-06-13</td>
+                                <td data-title="WIBOR 3M (%)" class="px-6 py-4 font-bold">5.21%</td>
+                                <td data-title="Zmiana" class="px-6 py-4 negative">&#9650; +0.02</td>
+                            </tr>
+                            <tr class="bg-white border-b">
+                                <td data-title="Data" class="px-6 py-4">2025-06-12</td>
+                                <td data-title="WIBOR 3M (%)" class="px-6 py-4 font-bold">5.19%</td>
+                                <td data-title="Zmiana" class="px-6 py-4 positive">&#9660; -0.01</td>
+                            </tr>
+                            <tr class="bg-white">
+                                <td data-title="Data" class="px-6 py-4">2025-06-11</td>
+                                <td data-title="WIBOR 3M (%)" class="px-6 py-4 font-bold">5.20%</td>
+                                <td data-title="Zmiana" class="px-6 py-4 neutral">&#9724; 0.00</td>
+                            </tr>
+                            <!-- Add more rows as needed from your sheet, manually updated -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="chart-placeholder mt-4 p-4 rounded-lg">
+                    <p class="text-gray-600">Wykres historii WIBOR (generowany dynamicznie w pełnej aplikacji)</p>
+                    <img src="https://placehold.co/600x300/e0fbfc/457b9d?text=WYKRES%20HISTORII%20WIBOR" alt="Wykres Historii WIBOR" class="w-full h-auto rounded-md">
+                </div>
+            </section>
+
+            <section class="mb-8 responsive-table">
+                <h2 class="text-xl md:text-2xl font-semibold pb-2 mb-6 section-title">
+                    &#128302; Prognozy Rat na Podstawie FRA
+                </h2>
+                <div class="card p-6 rounded-lg">
+                    <p class="text-sm text-orange-700 bg-orange-100 p-3 rounded-md mb-4 border border-orange-200">
+                        <b>Uwaga:</b> Prognozy FRA są danymi statycznymi w tej wersji kalkulatora i wymagają ręcznej aktualizacji.
+                    </p>
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Okres</th>
+                                <th scope="col" class="px-6 py-3">Prognozowana Rata</th>
+                                <th scope="col" class="px-6 py-3">Zmiana</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-white border-b">
+                                <td data-title="Okres" class="px-6 py-4">Rata za trzy miesiące</td>
+                                <td data-title="Prognozowana Rata" class="px-6 py-4 font-bold">5310.50 zł</td>
+                                <td data-title="Zmiana" class="px-6 py-4 positive">&#9660; -92.84 zł</td>
+                            </tr>
+                            <tr class="bg-white border-b">
+                                <td data-title="Okres" class="px-6 py-4">Rata za sześć miesięcy</td>
+                                <td data-title="Prognozowana Rata" class="px-6 py-4 font-bold">5150.11 zł</td>
+                                <td data-title="Zmiana" class="px-6 py-4 positive">&#9660; -253.23 zł</td>
+                            </tr>
+                            <tr class="bg-white border-b">
+                                <td data-title="Okres" class="px-6 py-4">Rata za dziewięć miesięcy</td>
+                                <td data-title="Prognozowana Rata" class="px-6 py-4 font-bold">5055.00 zł</td>
+                                <td data-title="Zmiana" class="px-6 py-4 positive">&#9660; -348.34 zł</td>
+                            </tr>
+                            <tr class="bg-white">
+                                <td data-title="Okres" class="px-6 py-4">Rata za dwanaście miesięcy</td>
+                                <td data-title="Prognozowana Rata" class="px-6 py-4 font-bold">4980.70 zł</td>
+                                <td data-title="Zmiana" class="px-6 py-4 positive">&#9660; -422.64 zł</td>
+                            </tr>
+                            <!-- Add more rows as needed, manually updated -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="chart-placeholder mt-4 p-4 rounded-lg">
+                    <p class="text-gray-600">Wykres prognoz FRA (generowany dynamicznie w pełnej aplikacji)</p>
+                    <img src="https://placehold.co/600x300/a8dadc/1d3557?text=WYKRES%20PROGNOZ%20FRA" alt="Wykres Prognoz FRA" class="w-full h-auto rounded-md">
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-gray-100 text-gray-600 text-center p-4 text-sm border-t border-gray-200">
+            Wygenerowano automatycznie. Dane historyczne i prognozy w sekcjach statycznych wymagają ręcznej aktualizacji.
+        </footer>
+    </div>
+
+    <script>
+        // Initial values from your configuration
+        const defaultLoanAmount = 782596.00;
+        const defaultInitialLoanAmount = 850000.00;
+        const defaultMonthsRemaining = 351;
+        const defaultMargin = 2.09;
+        const defaultWiborRate = 5.21;
+        const defaultCurrentInstallment = 5403.34;
+
+        // Get elements
+        const loanAmountInput = document.getElementById('loanAmount');
+        const initialLoanAmountInput = document.getElementById('initialLoanAmount');
+        const monthsRemainingInput = document.getElementById('monthsRemaining');
+        const marginInput = document.getElementById('margin');
+        const wiborRateInput = document.getElementById('wiborRate');
+        const currentInstallmentInput = document.getElementById('currentInstallment');
+        const calculateBtn = document.getElementById('calculateBtn');
+
+        const displayWibor = document.getElementById('displayWibor');
+        const displayCurrentInstallment = document.getElementById('displayCurrentInstallment');
+        const displayNewInstallment = document.getElementById('displayNewInstallment');
+        const displayInstallmentDiff = document.getElementById('displayInstallmentDiff');
+
+        const displayCapitalPaid = document.getElementById('displayCapitalPaid');
+        const displayCapitalPaidPercent = document.getElementById('displayCapitalPaidPercent');
+        const displayLoanAmount = document.getElementById('displayLoanAmount');
+        const progressBar = document.getElementById('progressBar');
+
+        const displayInterestPart = document.getElementById('displayInterestPart');
+        const displayPrincipalPart = document.getElementById('displayPrincipalPart');
+        const displayInterestPercent = document.getElementById('displayInterestPercent');
+        const displayPrincipalPercent = document.getElementById('displayPrincipalPercent');
+        const displayTotalInstallment = document.getElementById('displayTotalInstallment');
+        const displayTotalPaid = document.getElementById('displayTotalPaid');
+        const displayTotalInterest = document.getElementById('displayTotalInterest');
+        const pieChart = document.getElementById('pieChart');
+
+        const amortizationTableBody = document.querySelector('#amortizationTable tbody');
+        const toggleAmortizationTableBtn = document.getElementById('toggleAmortizationTable');
+        let fullAmortizationSchedule = [];
+        let showingFullAmortization = false;
+
+        const overpaymentAmountInput = document.getElementById('overpaymentAmount');
+        const overpaymentEffectRadios = document.querySelectorAll('input[name="overpaymentEffect"]');
+        const simulateOverpaymentBtn = document.getElementById('simulateOverpaymentBtn');
+        const overpaymentResultsDiv = document.getElementById('overpaymentResults');
+        const overpaymentSummary = document.getElementById('overpaymentSummary');
+        const totalInterestSavings = document.getElementById('totalInterestSavings');
+
+
+        // Calculation functions (from your Apps Script)
+        function calculateAnnuity(amount, annualRate, months) {
+            if (months <= 0) return amount;
+            if (annualRate <= 0) return amount / months;
+            const monthlyRate = annualRate / 12;
+            const inst = amount * monthlyRate / (1 - Math.pow(1 + monthlyRate, -months));
+            return parseFloat(inst.toFixed(2));
+        }
+
+        function calculateInstallmentParts(loanAmount, annualRate, totalInstallment) {
+            const interestPart = loanAmount * (annualRate / 12);
+            const principalPart = totalInstallment - interestPart;
+            return {
+                interestPart: interestPart > 0 ? interestPart : 0,
+                principalPart: principalPart > 0 ? principalPart : 0,
+            };
+        }
+
+        // Function to update the pie chart (CSS conic-gradient)
+        function updatePieChart(interestPercent) {
+            if (pieChart) {
+                const principalPercent = 100 - interestPercent;
+                pieChart.style.backgroundImage = `conic-gradient(#1d3557 ${interestPercent.toFixed(0)}%, #a8dadc 0)`;
+            }
+        }
+
+        // Amortization Schedule Calculation
+        function calculateAmortizationSchedule(loanAmount, annualRate, months) {
+            const schedule = [];
+            let remainingBalance = loanAmount;
+            const monthlyRate = annualRate / 12;
+            const monthlyInstallment = calculateAnnuity(loanAmount, annualRate, months);
+
+            for (let month = 1; month <= months; month++) {
+                const interestPayment = remainingBalance * monthlyRate;
+                let principalPayment = monthlyInstallment - interestPayment;
+
+                // Adjust last payment to avoid rounding errors
+                if (month === months) {
+                    principalPayment = remainingBalance;
+                }
+
+                remainingBalance -= principalPayment;
+                
+                schedule.push({
+                    month: month,
+                    openingBalance: remainingBalance + principalPayment, // This is current remainingBalance + current principalPayment
+                    interestPayment: interestPayment,
+                    principalPayment: principalPayment,
+                    installment: monthlyInstallment,
+                    closingBalance: remainingBalance < 0 ? 0 : remainingBalance // Ensure balance doesn't go negative
+                });
+            }
+            return schedule;
+        }
+
+        function renderAmortizationTable(schedule, limit = 12) {
+            amortizationTableBody.innerHTML = '';
+            const rowsToDisplay = showingFullAmortization ? schedule : schedule.slice(0, limit);
+
+            rowsToDisplay.forEach(item => {
+                const row = amortizationTableBody.insertRow();
+                row.className = 'bg-white border-b';
+                row.innerHTML = `
+                    <td data-title="Miesiąc" class="px-6 py-4">${item.month}</td>
+                    <td data-title="Saldo początkowe" class="px-6 py-4">${item.openingBalance.toFixed(2)} zł</td>
+                    <td data-title="Część odsetkowa" class="px-6 py-4">${item.interestPayment.toFixed(2)} zł</td>
+                    <td data-title="Część kapitałowa" class="px-6 py-4">${item.principalPayment.toFixed(2)} zł</td>
+                    <td data-title="Rata" class="px-6 py-4">${item.installment.toFixed(2)} zł</td>
+                    <td data-title="Saldo końcowe" class="px-6 py-4">${item.closingBalance.toFixed(2)} zł</td>
+                `;
+            });
+            toggleAmortizationTableBtn.textContent = showingFullAmortization ? 'Zwiń harmonogram' : `Pokaż pełny harmonogram (pierwsze ${limit} rat)`;
+        }
+
+        // Overpayment Simulator Calculation
+        function simulateOverpayment() {
+            const loanAmount = parseFloat(loanAmountInput.value);
+            const monthsRemaining = parseInt(monthsRemainingInput.value);
+            const margin = parseFloat(marginInput.value);
+            const wiborRate = parseFloat(wiborRateInput.value);
+            const overpaymentAmount = parseFloat(overpaymentAmountInput.value);
+            const overpaymentEffect = document.querySelector('input[name="overpaymentEffect"]:checked').value;
+
+            if (isNaN(overpaymentAmount) || overpaymentAmount <= 0) {
+                overpaymentResultsDiv.classList.add('hidden');
+                return;
+            }
+
+            const annualRate = (wiborRate + margin) / 100;
+
+            // Calculate original total interest
+            const originalInstallment = calculateAnnuity(loanAmount, annualRate, monthsRemaining);
+            const originalTotalInterest = (originalInstallment * monthsRemaining) - loanAmount;
+
+            let newTotalInterest = 0;
+            let summaryText = '';
+
+            if (overpaymentEffect === 'reduceMonths') {
+                const newLoanAmount = loanAmount - overpaymentAmount;
+                if (newLoanAmount <= 0) {
+                    summaryText = 'Kredyt zostanie spłacony w całości nadpłatą!';
+                    newTotalInterest = 0;
+                } else {
+                    let newMonthsRemaining = 0;
+                    let tempInstallment = calculateAnnuity(newLoanAmount, annualRate, monthsRemaining); // Rata pozostaje ta sama
+                    
+                    if (annualRate === 0) { // Handle 0 interest rate
+                        newMonthsRemaining = newLoanAmount / tempInstallment;
+                    } else {
+                        const monthlyRate = annualRate / 12;
+                        newMonthsRemaining = -Math.log(1 - (monthlyRate * newLoanAmount) / tempInstallment) / Math.log(1 + monthlyRate);
+                    }
+                    
+                    newMonthsRemaining = Math.ceil(newMonthsRemaining); // Round up to full months
+
+                    const newSchedule = calculateAmortizationSchedule(newLoanAmount, annualRate, newMonthsRemaining);
+                    newTotalInterest = newSchedule.reduce((sum, item) => sum + item.interestPayment, 0);
+
+                    const monthsSaved = monthsRemaining - newMonthsRemaining;
+                    summaryText = `Okres spłaty skrócony o ${monthsSaved.toFixed(0)} miesięcy! Nowy okres: ${newMonthsRemaining.toFixed(0)} miesięcy.`;
+                }
+
+            } else { // reduceInstallment
+                const newLoanAmount = loanAmount - overpaymentAmount;
+                 if (newLoanAmount <= 0) {
+                    summaryText = 'Kredyt zostanie spłacony w całości nadpłatą!';
+                    newTotalInterest = 0;
+                } else {
+                    const newInstallment = calculateAnnuity(newLoanAmount, annualRate, monthsRemaining);
+                    newTotalInterest = (newInstallment * monthsRemaining) - newLoanAmount;
+                    const installmentChange = originalInstallment - newInstallment;
+                    summaryText = `Nowa rata: ${newInstallment.toFixed(2)} zł (oszczędność ${installmentChange.toFixed(2)} zł/miesiąc).`;
+                }
+            }
+
+            const interestSavings = originalTotalInterest - newTotalInterest;
+            overpaymentSummary.textContent = interestSavings >=0 ? `Całkowite oszczędności na odsetkach: ${interestSavings.toFixed(2)} zł` : `Wzrost całkowitych odsetek: ${Math.abs(interestSavings).toFixed(2)} zł`;
+            totalInterestSavings.textContent = interestSavings.toFixed(2);
+            overpaymentResultsDiv.classList.remove('hidden');
+        }
+
+
+        // Main calculation and display function
+        function performCalculations() {
+            const loanAmount = parseFloat(loanAmountInput.value);
+            const initialLoanAmount = parseFloat(initialLoanAmountInput.value);
+            const monthsRemaining = parseInt(monthsRemainingInput.value);
+            const margin = parseFloat(marginInput.value);
+            const wiborRate = parseFloat(wiborRateInput.value);
+            const currentInstallment = parseFloat(currentInstallmentInput.value);
+
+            if (isNaN(loanAmount) || isNaN(initialLoanAmount) || isNaN(monthsRemaining) || isNaN(margin) || isNaN(wiborRate) || isNaN(currentInstallment) || monthsRemaining <= 0) {
+                // Clear displays if inputs are invalid
+                displayWibor.textContent = '--';
+                displayCurrentInstallment.textContent = '--';
+                displayNewInstallment.textContent = '--';
+                displayInstallmentDiff.textContent = '--';
+                displayInstallmentDiff.className = 'text-2xl font-bold'; // Reset color
+                
+                displayCapitalPaid.textContent = '--';
+                displayCapitalPaidPercent.textContent = '--';
+                displayLoanAmount.textContent = '--';
+                progressBar.style.width = '0%';
+                progressBar.textContent = '0%';
+
+                displayInterestPart.textContent = '--';
+                displayPrincipalPart.textContent = '--';
+                displayInterestPercent.textContent = '--';
+                displayPrincipalPercent.textContent = '--';
+                displayTotalInstallment.textContent = '--';
+                displayTotalPaid.textContent = '--';
+                displayTotalInterest.textContent = '--';
+                updatePieChart(0); // Reset pie chart
+                
+                amortizationTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Wprowadź poprawne dane do kalkulatora.</td></tr>';
+                overpaymentResultsDiv.classList.add('hidden');
+                return;
+            }
+
+            const annualRate = (wiborRate + margin) / 100;
+            const newInstallment = calculateAnnuity(loanAmount, annualRate, monthsRemaining);
+            const installmentDifference = newInstallment - currentInstallment;
+
+            // Update KPI display
+            displayWibor.textContent = `${wiborRate.toFixed(2)}%`;
+            displayCurrentInstallment.textContent = `${currentInstallment.toFixed(2)} zł`;
+            displayNewInstallment.textContent = `${newInstallment.toFixed(2)} zł`;
+            displayInstallmentDiff.textContent = `${installmentDifference >= 0 ? '+' : ''}${installmentDifference.toFixed(2)} zł`;
+            displayInstallmentDiff.className = `text-2xl font-bold ${installmentDifference >= 0 ? 'negative' : 'positive'}`;
+
+            // Update Progress section
+            const capitalPaid = initialLoanAmount - loanAmount;
+            const capitalPaidPercentage = (capitalPaid / initialLoanAmount) * 100;
+            
+            displayInitialLoanAmount.textContent = initialLoanAmount.toFixed(2);
+            displayCapitalPaid.textContent = capitalPaid.toFixed(2);
+            displayLoanAmount.textContent = loanAmount.toFixed(2);
+            displayCapitalPaidPercent.textContent = `${capitalPaidPercentage.toFixed(1)}%`;
+            progressBar.style.width = `${capitalPaidPercentage.toFixed(1)}%`;
+            progressBar.textContent = `${capitalPaidPercentage.toFixed(1)}%`;
+
+
+            // Update Installment Structure
+            const installmentParts = calculateInstallmentParts(loanAmount, annualRate, newInstallment);
+            const interestPercentage = (installmentParts.interestPart / newInstallment) * 100;
+            
+            displayInterestPart.textContent = installmentParts.interestPart.toFixed(2);
+            displayPrincipalPart.textContent = installmentParts.principalPart.toFixed(2);
+            displayInterestPercent.textContent = interestPercentage.toFixed(1);
+            displayPrincipalPercent.textContent = (100 - interestPercentage).toFixed(1);
+            displayTotalInstallment.textContent = newInstallment.toFixed(2);
+
+            const totalPaid = newInstallment * monthsRemaining;
+            const totalInterest = totalPaid - loanAmount;
+
+            displayTotalPaid.textContent = totalPaid.toFixed(2);
+            displayTotalInterest.textContent = totalInterest.toFixed(2);
+            updatePieChart(interestPercentage); // Update the pie chart
+
+            // Generate Amortization Schedule
+            fullAmortizationSchedule = calculateAmortizationSchedule(loanAmount, annualRate, monthsRemaining);
+            renderAmortizationTable(fullAmortizationSchedule);
+        }
+
+        // Event listeners
+        loanAmountInput.addEventListener('input', performCalculations);
+        initialLoanAmountInput.addEventListener('input', performCalculations);
+        monthsRemainingInput.addEventListener('input', performCalculations);
+        marginInput.addEventListener('input', performCalculations);
+        wiborRateInput.addEventListener('input', performCalculations);
+        currentInstallmentInput.addEventListener('input', performCalculations);
+        calculateBtn.addEventListener('click', performCalculations);
+
+        toggleAmortizationTableBtn.addEventListener('click', () => {
+            showingFullAmortization = !showingFullAmortization;
+            renderAmortizationTable(fullAmortizationSchedule);
+            toggleAmortizationTableBtn.textContent = showingFullAmortization ? 'Zwiń harmonogram' : `Pokaż pełny harmonogram (pierwsze ${12} rat)`;
+        });
+
+        simulateOverpaymentBtn.addEventListener('click', simulateOverpayment);
+        overpaymentAmountInput.addEventListener('input', () => {
+            if (overpaymentAmountInput.value === '' || parseFloat(overpaymentAmountInput.value) === 0) {
+                overpaymentResultsDiv.classList.add('hidden');
+            }
+        });
+        overpaymentEffectRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (parseFloat(overpaymentAmountInput.value) > 0) {
+                    simulateOverpayment();
+                }
+            });
+        });
+
+
+        // Perform initial calculation on page load with default values
+        document.addEventListener('DOMContentLoaded', performCalculations);
+    </script>
+</body>
+</html>
