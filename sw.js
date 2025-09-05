@@ -1,4 +1,4 @@
-const APP_VERSION = 'v3.5.2'; // pamiętaj, żeby zawsze podbić wersję przy deployu
+const APP_VERSION = 'v3.5.4'; // pamiętaj, żeby zawsze podbić wersję przy deployu
 
 const CACHE = 'raport-cache-' + APP_VERSION;
 const ASSETS = [
