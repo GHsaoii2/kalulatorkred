@@ -43,7 +43,11 @@
       display:flex; align-items:center; justify-content:center; gap:10px;
       font-weight:800; font-size:20px; color:var(--accent); text-align:center;
     }
-    .badge{ display:inline-block; margin-top:6px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.06); color:var(--muted); font-size:12px; text-align:center; }
+    .badge{
+      display:inline-block; margin-top:6px; padding:6px 10px; border-radius:999px;
+      background:rgba(255,255,255,.06); color:var(--muted); font-size:12px; text-align:center;
+    }
+    #asOf{ display:block; text-align:center; }
 
     /* KPI cards */
     .kpi-grid{ display:grid; grid-template-columns:1fr; gap:10px; }
@@ -92,7 +96,7 @@
 
   <!-- Konfiguracja dla app.js -->
   <script>
-    window.APP_VERSION = 'v3.5.1';
+    window.APP_VERSION = 'v3.5.1'; /* wersja tylko do cache, nie jest pokazywana */
     window.RAPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbymwnWurFrti71e3PDkm658dfRswPE-OFjTGKs24TdxYi2aS2btOPTm2Hb5xsOLe4II9w/exec?path=/api/report/json';
     function getCSS(prop){ return getComputedStyle(document.documentElement).getPropertyValue(prop)||'#ffffff'; }
   </script>
