@@ -1,7 +1,7 @@
 
-const APP_VERSION = 'v3.2.0';
+const APP_VERSION = 'v3.4.0';
 const CACHE = 'raport-cache-' + APP_VERSION;
-const ASSETS = ['./','./index.html','./app.js','./manifest.json','./icon-192.png','./icon-512.png','./diag.html'];
+const ASSETS = ['./','./index.html','./app.js','./manifest.json','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(()=>self.skipWaiting()));

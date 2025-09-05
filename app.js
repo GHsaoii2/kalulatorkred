@@ -13,32 +13,28 @@
     return 'rat';
   }
 
-  function abortableFetch(url, ms=10000){
+  function abortableFetch(url, ms=12000){
     const ctrl = new AbortController();
     const t = setTimeout(()=>ctrl.abort(), ms);
     return { promise: fetch(url, {cache:'no-store', signal: ctrl.signal}), cancel: ()=>clearTimeout(t) };
   }
 
-  async function fetchJsonBase(url){
+  async function fetchJson(url){
     const u = new URL(url);
-    u.searchParams.set('v', window.APP_VERSION || 'v');
+    u.searchParams.set('v', window.APP_VERSION||'v');
     u.searchParams.set('_t', Date.now());
     const {promise, cancel} = abortableFetch(u.toString(), 12000);
-    try{
-      const r = await promise;
-      cancel();
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const txt = await r.text();
-      try { return JSON.parse(txt); }
-      catch(e){ throw new Error('Niepoprawny JSON: ' + txt.slice(0,120) + '…'); }
-    }catch(e){ throw e; }
+    const r = await promise; cancel();
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const txt = await r.text();
+    try { return JSON.parse(txt); } catch(e){ throw new Error('Niepoprawny JSON: ' + txt.slice(0,120) + '…'); }
   }
 
   async function load(){
     showError(null);
     id('asOf').textContent = 'Ładowanie… • ' + (window.APP_VERSION||'');
     try{
-      const data = await fetchJsonBase(window.RAPORT_ENDPOINT);
+      const data = await fetchJson(window.RAPORT_ENDPOINT);
       render(data);
     }catch(e){
       showError('Nie udało się pobrać raportu: ' + e.message);
@@ -62,7 +58,7 @@
     id('diff').textContent = (diff>0?'▲ +':'▼ ') + Math.abs(diff).toFixed(2) + NBSP + 'zł';
     id('diff').className = 'value nowrap ' + (diff>0?'up':'down');
 
-    const monthsRemaining = Number(data.monthsRemaining || data.months || 0);
+    const monthsRemaining = Number(data.monthsRemaining || data.monthsRemaining || 0);
     if (monthsRemaining > 0){
       id('raty').textContent = monthsRemaining + NBSP + ratyWord(monthsRemaining);
       const today = new Date();
@@ -70,7 +66,6 @@
       id('ratySub').textContent = 'ostatnia rata: ' + monthsPL[last.getMonth()] + ' ' + last.getFullYear();
     } else { id('raty').textContent='—'; id('ratySub').textContent='—'; }
 
-    // Progress
     const pct = Math.max(0, Math.min(100, Number(data.capitalPaidPct||0)));
     id('bar').style.width = pct.toFixed(1)+'%';
     id('barLabel').textContent = pct.toFixed(1)+'%';
@@ -79,7 +74,6 @@
     id('rem').textContent  = PLN(data.remainingLoan);
     id('pct').textContent  = pct.toFixed(1)+'%';
 
-    // Charts + tables
     drawPie(data.installmentParts?.interest||0, data.installmentParts?.principal||0);
     renderHistoryAndChart(data.history||[]);
     renderFra(data.fraProjections||[]);
@@ -144,7 +138,7 @@
 
   function getCSS(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 
-  // Buttons
+  // Hard refresh (fix for Safari caches)
   async function hardRefresh() {
     try {
       const keys = await caches.keys();
@@ -158,7 +152,11 @@
     u.searchParams.set('v', Date.now());
     window.location.replace(u.toString());
   }
-  id('forceRefresh')?.addEventListener('click', hardRefresh);
+  // Upewnij się, że event jest podpięty:
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const btn = document.getElementById('forceRefresh');
+    if (btn) btn.addEventListener('click', hardRefresh);
+  });
 
   // SW register + auto-update
   if ('serviceWorker' in navigator) {
@@ -180,6 +178,5 @@
     });
   }
 
-  // go
   load();
 })();
