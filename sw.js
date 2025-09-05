@@ -1,4 +1,4 @@
-const APP_VERSION = 'v3.4.3'; // Zwiększ wersję!
+const APP_VERSION = 'v3.5.0'; // Zwiększ wersję!
 
 const CACHE = 'raport-cache-' + APP_VERSION;
 const ASSETS = ['./','./index.html','./app.js','./manifest.json','./icon-192.png','./icon-512.png'];
