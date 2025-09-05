@@ -1,4 +1,4 @@
-// app.js (v3.5.9)
+// app.js (v3.6.0)
 function getCSS(p){return getComputedStyle(document.documentElement).getPropertyValue(p)||'#ffffff'}
 
 (function(){
@@ -33,8 +33,11 @@ function getCSS(p){return getComputedStyle(document.documentElement).getProperty
 
   function renderKPI(d){
     id('asOf').textContent='Stan na '+(d.asOf||'—');
+
+    // WIBOR = zawsze ostatni z historii
     const wibor = Array.isArray(d.history)&&d.history[0] ? Number(d.history[0][1]) : num(d.wibor3m);
     id('wibor').textContent = wibor!=null ? wibor.toFixed(2)+'%' : '—';
+
     id('curr').textContent  = PLN(num(d.currentInstallment));
     id('new').textContent   = PLN(num(d.newInstallment));
 
@@ -56,6 +59,7 @@ function getCSS(p){return getComputedStyle(document.documentElement).getProperty
     const pct=clamp(num(d.capitalPaidPct)||0,0,100);
     id('bar').style.width=pct.toFixed(1)+'%';
     id('barLabel').textContent=pct.toFixed(1)+'%';
+    id('pct').textContent=pct.toFixed(1)+'%';
     id('init').textContent=PLN(num(d.initialLoan));
     id('paid').textContent=PLN(num(d.capitalPaid));
     id('rem').textContent =PLN(num(d.remainingLoan));
@@ -113,66 +117,4 @@ function getCSS(p){return getComputedStyle(document.documentElement).getProperty
     if(rows.length){
       const labels=rows.map(r=>r[0]);
       const values=rows.map(r=>Number(r[1]));
-      makeChart('fraChart',{
-        type:'line',
-        data:{labels,datasets:[{data:values,tension:.35,pointRadius:3,borderWidth:2}]},
-        options:{responsive:false,maintainAspectRatio:true,
-          plugins:{legend:{display:false}},
-          scales:{x:{ticks:{color:getCSS('--text')},grid:{color:getCSS('--grid')}},
-                  y:{ticks:{color:getCSS('--text')},grid:{color:getCSS('--grid')}}}
-        }
-      });
-    }
-    renderFraTable(rows);
-    RENDERED.fra=true;
-  }
-  function renderFraTable(rows){
-    const wrap=id('fraTableWrap');
-    let html='<table class="tbl"><tr><th>Miesiąc raty</th><th>Prognozowana rata</th><th>Zmiana</th></tr>';
-    rows.forEach(r=>{
-      const label=r[0], val=Number(r[1]), ch=Number(r[2]);
-      const sym=ch>0?'▲':(ch<0?'▼':'▬'); const color=ch<0?'#2a9d8f':(ch>0?'#e63946':'#9ca3af');
-      html+=`<tr><td>${label}</td><td><b>${val.toFixed(2)}&nbsp;zł</b></td><td style="color:${color};font-weight:700">${sym} ${Math.abs(ch).toFixed(2)}&nbsp;zł</td></tr>`;
-    });
-    html+='</table>'; wrap.innerHTML=html;
-  }
-
-  // otwarte sekcje na starcie – od razu render
-  function renderAllOpen(){
-    if(!LAST) return;
-    renderProgress(LAST); renderPie(LAST); renderWibor(LAST); renderFra(LAST);
-  }
-
-  // toggle (bez animacji – pewny rendering)
-  document.addEventListener('click',e=>{
-    const btn=e.target.closest('.acc-head'); if(!btn) return;
-    const trg=id(btn.dataset.target); const open=btn.getAttribute('aria-expanded')==='true';
-    btn.setAttribute('aria-expanded', String(!open));
-    trg.classList.toggle('open', !open);
-    if(!open && LAST){
-      if(trg.id==='acc-progress') renderProgress(LAST);
-      if(trg.id==='acc-pie')      renderPie(LAST);
-      if(trg.id==='acc-wibor')    renderWibor(LAST);
-      if(trg.id==='acc-fra')      renderFra(LAST);
-    }
-  });
-
-  // SW (bez zmian)
-  if('serviceWorker' in navigator){
-    window.addEventListener('load',async()=>{
-      try{
-        const reg=await navigator.serviceWorker.register('./sw.js?v='+(window.APP_VERSION||'v'));
-        reg.addEventListener('updatefound',()=>{
-          const nw=reg.installing; nw&&nw.addEventListener('statechange',()=>{
-            if(nw.state==='installed'&&navigator.serviceWorker.controller){
-              reg.active?.postMessage?.('SKIP_WAITING'); setTimeout(()=>location.reload(),250);
-            }
-          });
-        });
-        setTimeout(()=>reg.update().catch(()=>{}),1200);
-      }catch(e){console.warn('SW',e)}
-    });
-  }
-
-  load();
-})();
+     
