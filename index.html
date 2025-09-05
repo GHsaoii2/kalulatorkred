@@ -9,50 +9,67 @@
   <meta name="theme-color" content="#0b1220">
 
   <style>
-    :root{ --bg:#121416; --card:#1f2937; --text:#e2e6e9; --accent:#52b0ff; --good:#40c09e; --bad:#e65050; --muted:#9ca3af; }
+    :root{
+      --bg:#121416; --card:#1f2937; --text:#e2e6e9; --accent:#52b0ff;
+      --good:#40c09e; --bad:#e65050; --muted:#9ca3af; --grid:#2a3342;
+    }
     *{box-sizing:border-box}
     body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0}
-    .card{background:var(--card);border-radius:14px;margin:16px auto;padding:0;width:92%;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+    main, header{max-width:640px;margin:0 auto}
+    .card{background:var(--card);border-radius:16px;margin:16px;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.35)}
     .pad{padding:18px}
-    header.card .title{font-size:22px;font-weight:700;text-align:center;color:var(--accent)}
+
+    /* nagłówek */
+    header .title{font-size:24px;font-weight:800;text-align:center;color:var(--accent)}
     #asOf{text-align:center;margin-top:6px;font-size:13px;color:var(--muted)}
 
-    .kpis{display:grid;grid-template-columns:1fr;gap:14px;text-align:center}
-    .kpi{background:#111827;border-radius:12px;padding:14px}
-    .kpi .label{font-size:14px;color:var(--muted)}
-    .kpi .val{font-size:22px;font-weight:700;margin-top:4px}
+    /* KPI */
+    .kpis{display:grid;grid-template-columns:1fr;gap:12px}
+    .kpi{background:#111827;border-radius:12px;padding:14px;text-align:center}
+    .kpi .label{font-size:13px;color:var(--muted);letter-spacing:.02em}
+    .kpi .val{font-size:24px;font-weight:800;margin-top:6px}
     .nowrap{white-space:nowrap}
     .value.up{color:var(--bad)} .value.down{color:var(--good)}
 
-    .acc-head{position:relative;width:100%;background:transparent;border:0;padding:14px 40px;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--accent);font-weight:800;font-size:18px;cursor:pointer}
-    .acc-dot{position:absolute;left:16px;width:12px;height:12px;border-radius:50%;background:#3a3f46;transition:background .2s,box-shadow .25s}
+    /* akordeon */
+    .acc-head{
+      position:relative;width:100%;background:transparent;border:0;padding:16px 44px;
+      display:flex;align-items:center;justify-content:center;gap:10px;
+      color:var(--accent);font-weight:900;font-size:22px;cursor:pointer
+    }
+    .acc-dot{position:absolute;left:16px;top:calc(50% - 6px);width:12px;height:12px;border-radius:50%;
+      background:#3a3f46;transition:background .2s,box-shadow .25s}
     .acc-head[aria-expanded="true"] .acc-dot{background:var(--good);box-shadow:0 0 10px rgba(16,185,129,.45)}
-    .acc-chev{position:absolute;right:16px;width:10px;height:10px;border-right:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(-45deg);transition:transform .2s}
-    .acc-head[aria-expanded="true"] .acc-chev{transform:rotate(45deg)}
+    .acc-chev{position:absolute;right:16px;top:50%;transform:translateY(-50%) rotate(-45deg);
+      width:10px;height:10px;border-right:2px solid var(--accent);border-bottom:2px solid var(--accent);transition:transform .2s}
+    .acc-head[aria-expanded="true"] .acc-chev{transform:translateY(-50%) rotate(45deg)}
     .acc-body{display:none}
     .acc-body.open{display:block}
 
-    .progress-wrap{background-color:#333;border-radius:12px;margin:10px 0;height:28px;user-select:none}
-    .progress-bar{height:28px;border-radius:12px;background:linear-gradient(90deg,#0066cc,#52b0ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;transition:width 1s;user-select:none}
+    /* pasek postępu – stabilny, label absolutny */
+    .progress-wrap{position:relative;background:#2c2c2c;border-radius:14px;margin:12px 0;height:28px;overflow:hidden}
+    .progress-bar{height:100%;border-radius:14px;background:linear-gradient(90deg,#0066cc,#52b0ff);width:0%}
+    .progress-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      font-weight:800;color:#fff;pointer-events:none;user-select:none}
 
-    /* wykresy – stała wysokość, by nie znikały w akordeonie */
+    /* wykresy – stałe rozmiary, centralnie */
     .chart-box{display:flex;justify-content:center}
-    canvas.chart-sm{width:320px; height:200px !important; max-width:100%;}
+    canvas.chart-sm{width:320px; height:180px !important; max-width:100%;}
 
-    table.tbl{width:100%;border-collapse:collapse;border:1px solid #334158;border-radius:10px;overflow:hidden}
-    .tbl th,.tbl td{padding:10px;border:1px solid #334158;font-size:14px;text-align:center;vertical-align:middle}
-    .tbl th{background:#111827;color:var(--text);font-weight:600}
-    .tbl td:nth-child(1),.tbl td:nth-child(3),.tbl th:nth-child(1),.tbl th:nth-child(3){white-space:nowrap}
+    /* tabele */
+    table.tbl{width:100%;border-collapse:collapse;border:1px solid #334158;border-radius:12px;overflow:hidden}
+    .tbl th,.tbl td{padding:12px 14px;border:1px solid #334158;font-size:14px;text-align:center;vertical-align:middle;white-space:nowrap}
+    .tbl th{background:#111827;color:var(--text);font-weight:700}
 
-    #errorBox{color:#ff6b6b;background:#2d1b1b;padding:15px;text-align:center;display:none;margin:20px;border-radius:8px;border:1px solid #ff6b6b}
+    #errorBox{color:#ff6b6b;background:#2d1b1b;padding:14px;text-align:center;display:none;margin:16px;border-radius:8px;border:1px solid #ff6b6b}
   </style>
 
   <script>
-    window.APP_VERSION = 'v3.5.8';
-    window.RAPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbymwnWurFrti71e3PDkm658dfRswPE-OFjTGKs24TdxYi2aS2btOPTm2Hb5xsOLe4II9w/exec?path=/api/report/json';
+    window.APP_VERSION='v3.5.9';
+    window.RAPORT_ENDPOINT='https://script.google.com/macros/s/AKfycbymwnWurFrti71e3PDkm658dfRswPE-OFjTGKs24TdxYi2aS2btOPTm2Hb5xsOLe4II9w/exec?path=/api/report/json';
   </script>
 
-  <!-- Chart.js z przypiętą wersją + fallback lokalny -->
+  <!-- Chart.js (pin) + fallback -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer
     onerror="var s=document.createElement('script');s.src='./chart.4.4.3.min.js';s.defer=true;document.head.appendChild(s);"></script>
 </head>
@@ -80,16 +97,17 @@
 
     <!-- Postęp spłaty -->
     <section class="card">
-      <button class="acc-head" data-target="acc-progress" aria-expanded="false">
+      <button class="acc-head" data-target="acc-progress" aria-expanded="true">
         <span class="acc-dot"></span> Postęp spłaty <span class="acc-chev"></span>
       </button>
-      <div id="acc-progress" class="acc-body">
+      <div id="acc-progress" class="acc-body open">
         <div class="pad">
           <div><strong>Kapitał początkowy:</strong> <span id="init">–</span></div>
           <div><strong>Kapitał spłacony:</strong> <span id="paid">–</span></div>
           <div><strong>Pozostało do spłaty:</strong> <span id="rem">–</span></div>
           <div class="progress-wrap">
-            <div id="bar" class="progress-bar" style="width:0%"><span id="barLabel">0%</span></div>
+            <div id="bar" class="progress-bar"></div>
+            <div id="barLabel" class="progress-label">0%</div>
           </div>
         </div>
       </div>
@@ -97,10 +115,10 @@
 
     <!-- Struktura raty -->
     <section class="card">
-      <button class="acc-head" data-target="acc-pie" aria-expanded="false">
+      <button class="acc-head" data-target="acc-pie" aria-expanded="true">
         <span class="acc-dot"></span> Struktura najbliższej raty <span class="acc-chev"></span>
       </button>
-      <div id="acc-pie" class="acc-body">
+      <div id="acc-pie" class="acc-body open">
         <div class="pad" style="text-align:center">
           <div class="chart-box"><canvas id="pieChart" class="chart-sm"></canvas></div>
           <div style="margin-top:10px">Odsetki: <span id="odsetki">–</span> &nbsp;|&nbsp; Kapitał: <span id="kapital">–</span></div>
@@ -110,10 +128,10 @@
 
     <!-- Historia WIBOR -->
     <section class="card">
-      <button class="acc-head" data-target="acc-wibor" aria-expanded="false">
+      <button class="acc-head" data-target="acc-wibor" aria-expanded="true">
         <span class="acc-dot"></span> Historia WIBOR 3M <span class="acc-chev"></span>
       </button>
-      <div id="acc-wibor" class="acc-body">
+      <div id="acc-wibor" class="acc-body open">
         <div class="pad">
           <div class="chart-box"><canvas id="wiborChart" class="chart-sm"></canvas></div>
           <div id="histTableWrap"></div>
@@ -123,10 +141,10 @@
 
     <!-- Prognozy FRA -->
     <section class="card">
-      <button class="acc-head" data-target="acc-fra" aria-expanded="false">
+      <button class="acc-head" data-target="acc-fra" aria-expanded="true">
         <span class="acc-dot"></span> Prognozy FRA <span class="acc-chev"></span>
       </button>
-      <div id="acc-fra" class="acc-body">
+      <div id="acc-fra" class="acc-body open">
         <div class="pad">
           <div class="chart-box"><canvas id="fraChart" class="chart-sm"></canvas></div>
           <div id="fraTableWrap"></div>
@@ -136,10 +154,6 @@
   </main>
 
   <div id="errorBox"></div>
-  <div style="text-align:center;margin:20px">
-    <button id="retryBtn" style="display:none;padding:12px 24px;background:#52b0ff;border:none;color:#fff;border-radius:8px;font-weight:600;cursor:pointer">🔄 Spróbuj ponownie</button>
-  </div>
-
-  <script src="./app.js?v=v3.5.8" defer></script>
+  <script src="./app.js?v=v3.5.9" defer></script>
 </body>
 </html>
