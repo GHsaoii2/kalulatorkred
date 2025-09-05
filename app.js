@@ -1,11 +1,30 @@
+// app.js
+
+// Uwaga: w index.html masz też globalny helper getCSS(property).
 function getCSS(property) {
-    return getComputedStyle(document.documentElement).getPropertyValue(property) || '#ffffff';
+  return getComputedStyle(document.documentElement).getPropertyValue(property) || '#ffffff';
 }
+
 (function(){
   const id = s => document.getElementById(s);
   const NBSP = '\u00A0';
   const PLN = v => (v==null?'-':(Number(v).toFixed(2) + NBSP + 'zł'));
   const monthsPL = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+
+  // Rejestr wykresów, żeby nie dublować instancji przy rerenderze
+  const CHARTS = {};
+  function makeChart(canvasId, config) {
+    const cvs = document.getElementById(canvasId);
+    if (!cvs) return null;
+    try {
+      if (CHARTS[canvasId]) CHARTS[canvasId].destroy();
+      CHARTS[canvasId] = new Chart(cvs, config);
+      return CHARTS[canvasId];
+    } catch (e) {
+      console.warn('Chart error for', canvasId, e);
+      return null;
+    }
+  }
 
   function ratyWord(n){
     n = Math.abs(Math.floor(n||0));
@@ -21,11 +40,9 @@ function getCSS(property) {
     return { promise: fetch(url, {cache:'no-store', signal: ctrl.signal}), cancel: ()=>clearTimeout(t) };
   }
 
+  // NIE dopisujemy parametrów do URL — Apps Script bywa wrażliwy na nieznane query
   async function fetchJson(url){
-    const u = new URL(url);
-    u.searchParams.set('v', window.APP_VERSION||'v');
-    u.searchParams.set('_t', Date.now());
-    const {promise, cancel} = abortableFetch(u.toString(), 12000);
+    const {promise, cancel} = abortableFetch(url, 12000);
     const r = await promise; cancel();
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const txt = await r.text();
@@ -58,10 +75,12 @@ function getCSS(property) {
 
   function render(data){
     id('asOf').textContent = 'Stan na ' + (data.asOf||'—') + ' • ' + (window.APP_VERSION||'');
+
     const wibor = num(data.wibor3m);
     id('wibor').textContent = (wibor!=null? wibor.toFixed(2)+'%' : '—');
     id('curr').textContent  = PLN(num(data.currentInstallment));
     id('new').textContent   = PLN(num(data.newInstallment));
+
     const diff = (num(data.newInstallment)||0) - (num(data.currentInstallment)||0);
     id('diff').textContent = (diff>0?'▲ +':'▼ ') + Math.abs(diff).toFixed(2) + NBSP + 'zł';
     id('diff').className = 'value nowrap ' + (diff>0?'up':'down');
@@ -82,7 +101,7 @@ function getCSS(property) {
     id('rem').textContent  = PLN(num(data.remainingLoan));
     id('pct').textContent  = pct.toFixed(1)+'%';
 
-    // charts guarded
+    // wykresy
     safePie(num(data.installmentParts?.interest), num(data.installmentParts?.principal));
     safeWiborChart(data.history||[]);
     safeFraChart(data.fraProjections||[]);
@@ -91,92 +110,147 @@ function getCSS(property) {
   function num(x){ const n = Number(x); return isNaN(n)?null:n; }
   function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
 
+  // Donut: Struktura raty
   function safePie(interest, principal){
     try{
-      if (!(window.Chart && Chart.Doughnut)) {/*noop*/}
-      const ctx = document.getElementById('pieChart');
-      new Chart(ctx, { type:'doughnut', data:{ labels:['Odsetki','Kapitał'], datasets:[{ data:[interest||0, principal||0], borderWidth:0, backgroundColor:['#3b82f6','#93c5fd'] }]},
-        options:{ plugins:{ legend:{ display:true, labels:{ color:getCSS('--text') } } }, cutout:'60%', responsive:true, maintainAspectRatio:false } });
+      makeChart('pieChart', {
+        type: 'doughnut',
+        data: {
+          labels: ['Odsetki','Kapitał'],
+          datasets: [{
+            data: [interest || 0, principal || 0],
+            backgroundColor: ['#3b82f6','#93c5fd'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          plugins:{ legend:{ display:true, labels:{ color:getCSS('--text') || '#e2e6e9' } } },
+          cutout: '60%',
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
       id('odsetki').textContent = PLN(interest||0);
       id('kapital').textContent = PLN(principal||0);
     }catch(e){ console.warn('Pie chart skipped:', e); }
   }
 
- function safeWiborChart(rows) {
-    try {
-        const wrap = id('histTableWrap');
-        if (!rows.length) {
-            wrap.innerHTML = '<p>Brak danych historycznych</p>';
-            return;
+  // WIBOR: wykres + tabela (ostatnie 5 dni)
+  function safeWiborChart(rows){
+    try{
+      const wrap = id('histTableWrap');
+      if(!Array.isArray(rows) || !rows.length){
+        wrap.innerHTML = '<p>Brak danych historycznych</p>';
+        return;
+      }
+
+      const last5 = rows.slice(0,5).reverse(); // na osi: od najstarszego do najnowszego
+      const labels = last5.map(r => r[0]);
+      const values = last5.map(r => Number(r[1] || 0));
+
+      makeChart('wiborChart', {
+        type: 'line',
+        data: { labels, datasets: [{
+          data: values,
+          tension: .35,
+          fill: true,
+          borderWidth: 2,
+          borderColor: '#3b82f6',
+          pointRadius: 3,
+          backgroundColor: 'rgba(59,130,246,.15)'
+        }]},
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+            y: { grid: { color: 'rgba(100,116,139,.15)' }, ticks: { color: '#94a3b8' } }
+          },
+          responsive: true,
+          maintainAspectRatio: false
         }
-        
-        let html = '<table style="width:100%;border-collapse:collapse;border:1px solid #dee2e6;border-radius:10px">';
-        html += '<tr>';
-        html += '<th style="border:1px solid #dee2e6;padding:12px;background:#f8f9fa">Data</th>';
-        html += '<th style="border:1px solid #dee2e6;padding:12px;background:#f8f9fa">WIBOR 3M (%)</th>';
-        html += '<th style="border:1px solid #dee2e6;padding:12px;background:#f8f9fa">Zmiana</th>';
-        html += '</tr>';
-        
-        rows.forEach(row => {
-            const d = row[0];
-            const val = Number(row[1]);
-            const ch = Number(row[2]);
-            const sym = ch > 0 ? '▲' : (ch < 0 ? '▼' : '▬');
-            const color = ch < 0 ? '#2a9d8f' : (ch > 0 ? '#e63946' : '#111827');
-            
-            html += '<tr>';
-            html += '<td style="border:1px solid #dee2e6;padding:12px">' + d + '</td>';
-            html += '<td style="border:1px solid #dee2e6;padding:12px"><b>' + val.toFixed(2) + '%</b></td>';
-            html += '<td style="border:1px solid #dee2e6;padding:12px;color:' + color + ';font-weight:600">' + sym + ' ' + Math.abs(ch).toFixed(2) + '</td>';
-            html += '</tr>';
-        });
-        
-        html += '</table>';
-        wrap.innerHTML = html;
-    } catch (e) {
-        console.warn('WIBOR chart error:', e);
-    }
-}
+      });
 
- function safeFraChart(rows) {
-    try {
-        const wrap = id('fraTableWrap');
-        if (!rows.length) {
-            wrap.innerHTML = '<p>Brak prognoz FRA</p>';
-            return;
+      // tabela (5 najnowszych w kolejności od najnowszego)
+      const table5 = rows.slice(0,5);
+      let html = '<table style="width:100%;border-collapse:collapse;border:1px solid #334158;border-radius:10px;overflow:hidden">';
+      html += '<tr><th style="padding:12px;background:#111827;border:1px solid #334158">Data</th>';
+      html += '<th style="padding:12px;background:#111827;border:1px solid #334158">WIBOR 3M (%)</th>';
+      html += '<th style="padding:12px;background:#111827;border:1px solid #334158">Zmiana</th></tr>';
+
+      table5.forEach(row => {
+        const d = row[0];
+        const val = Number(row[1]);
+        const ch = Number(row[2]);
+        const sym = ch > 0 ? '▲' : (ch < 0 ? '▼' : '▬');
+        const color = ch < 0 ? '#40c09e' : (ch > 0 ? '#e65050' : '#e2e6e9');
+        html += `<tr>
+          <td style="padding:12px;border:1px solid #334158">${d}</td>
+          <td style="padding:12px;border:1px solid #334158"><b>${val.toFixed(2)}%</b></td>
+          <td style="padding:12px;border:1px solid #334158;color:${color};font-weight:600">${sym} ${Math.abs(ch).toFixed(2)}</td>
+        </tr>`;
+      });
+      html += '</table>';
+      wrap.innerHTML = html;
+
+    }catch(e){ console.warn('WIBOR chart error:', e); }
+  }
+
+  // FRA: wykres + tabela
+  function safeFraChart(rows){
+    try{
+      const wrap = id('fraTableWrap');
+      if(!Array.isArray(rows) || !rows.length){
+        wrap.innerHTML = '<p>Brak prognoz FRA</p>';
+        return;
+      }
+
+      const labels = rows.map(r => r[0]);
+      const values = rows.map(r => Number(r[1] || 0));
+
+      makeChart('fraChart', {
+        type: 'line',
+        data: { labels, datasets: [{
+          data: values,
+          tension: .35,
+          fill: true,
+          borderWidth: 2,
+          borderColor: '#60a5fa',
+          pointRadius: 3,
+          backgroundColor: 'rgba(96,165,250,.15)'
+        }]},
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+            y: { grid: { color: 'rgba(100,116,139,.15)' }, ticks: { color: '#94a3b8' } }
+          },
+          responsive: true,
+          maintainAspectRatio: false
         }
-        
-        let html = '<table style="width:100%;border-collapse:collapse;border:1px solid #dee2e6;border-radius:10px">';
-        html += '<tr>';
-        html += '<th style="border:1px solid #dee2e6;padding:12px;background:#f8f9fa">Miesiąc raty</th>';
-        html += '<th style="border:1px solid #dee2e6;padding:12px;background:#f8f9fa">Prognozowana rata</th>';
-        html += '<th style="border:1px solid #dee2e6;padding:12px;background:#f8f9fa">Zmiana</th>';
-        html += '</tr>';
-        
-        rows.forEach(row => {
-            const label = row[0];
-            const val = Number(row[1]);
-            const ch = Number(row[2]);
-            const sym = ch > 0 ? '▲' : (ch < 0 ? '▼' : '▬');
-            const color = ch < 0 ? '#2a9d8f' : (ch > 0 ? '#e63946' : '#111827');
-            
-            html += '<tr>';
-            html += '<td style="border:1px solid #dee2e6;padding:12px">' + label + '</td>';
-            html += '<td style="border:1px solid #dee2e6;padding:12px"><b>' + val.toFixed(2) + '\u00A0zł</b></td>';
-            html += '<td style="border:1px solid #dee2e6;padding:12px;color:' + color + ';font-weight:600">' + sym + ' ' + Math.abs(ch).toFixed(2) + '\u00A0zł</td>';
-            html += '</tr>';
-        });
-        
-        html += '</table>';
-        wrap.innerHTML = html;
-    } catch (e) {
-        console.warn('FRA chart error:', e);
-    }
-}
+      });
 
-  function getCSS(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+      let html = '<table style="width:100%;border-collapse:collapse;border:1px solid #334158;border-radius:10px;overflow:hidden">';
+      html += '<tr><th style="padding:12px;background:#111827;border:1px solid #334158">Miesiąc raty</th>';
+      html += '<th style="padding:12px;background:#111827;border:1px solid #334158">Prognozowana rata</th>';
+      html += '<th style="padding:12px;background:#111827;border:1px solid #334158">Zmiana</th></tr>';
 
-  // Hard refresh
+      rows.forEach(r => {
+        const label = r[0], val = Number(r[1]||0), ch = Number(r[2]||0);
+        const sym = ch > 0 ? '▲' : (ch < 0 ? '▼' : '▬');
+        const color = ch < 0 ? '#40c09e' : (ch > 0 ? '#e65050' : '#e2e6e9');
+        html += `<tr>
+          <td style="padding:12px;border:1px solid #334158">${label}</td>
+          <td style="padding:12px;border:1px solid #334158"><b>${val.toFixed(2)}&nbsp;zł</b></td>
+          <td style="padding:12px;border:1px solid #334158;color:${color};font-weight:600">${sym} ${Math.abs(ch).toFixed(2)}&nbsp;zł</td>
+        </tr>`;
+      });
+      html += '</table>';
+      wrap.innerHTML = html;
+
+    }catch(e){ console.warn('FRA chart error:', e); }
+  }
+
+  // Hard refresh (czyści Cache Storage i unregisteruje SW)
   async function hardRefresh() {
     try {
       const keys = await caches.keys();
@@ -190,12 +264,13 @@ function getCSS(property) {
     u.searchParams.set('v', Date.now());
     window.location.replace(u.toString());
   }
+
   document.addEventListener('DOMContentLoaded', ()=>{
     const btn = document.getElementById('forceRefresh');
     if (btn) btn.addEventListener('click', hardRefresh);
   });
 
-  // SW
+  // Rejestracja SW + auto-update
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
       try {
