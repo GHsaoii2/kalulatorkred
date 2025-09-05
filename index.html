@@ -1,180 +1,155 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pl">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>Raport Kredytowy</title>
-    <meta name="theme-color" content="#eef3fb" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="color-scheme" content="dark light">
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <style>
-      :root {
-        --bg: #eef3fb; --card: #ffffff; --border: #e6ecf5; --text: #0f172a; --muted: #667085;
-        --accent: #3b82f6; --accent-2: #93c5fd; --pill: #f2f5fa;
-        --shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-        --radius-xl: 22px; --radius-lg: 18px;
-        --down: #10b981; --up: #ef4444;
-      }
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --bg:#0b1220; --card:#0f172a; --border: rgba(255,255,255,0.08); --text:#e5e7eb; --muted:#94a3b8;
-          --pill: rgba(255,255,255,0.06); --shadow: 0 10px 30px rgba(0,0,0,0.35);
-        }
-      }
-      * { box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
-      html, body { margin:0; padding:0; background:var(--bg); color:var(--text);
-        font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow-x:hidden; }
-      .statusbar-fix { position:fixed; top:0; left:0; right:0; height: env(safe-area-inset-top); background: var(--bg); z-index: 9999; pointer-events:none; }
-      .safe { padding: calc(env(safe-area-inset-top) + 12px) max(14px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); }
-      .wrap { width:100%; max-width:520px; margin:0 auto; }
-      .header { background:linear-gradient(180deg, rgba(59,130,246,.12), rgba(59,130,246,0) 70%), var(--card);
-                border:1px solid var(--border); border-radius: var(--radius-xl); padding:14px; box-shadow: var(--shadow); text-align:center; }
-      @media (prefers-color-scheme: dark) { .header { background: var(--card); } }
-      .badge { display:inline-block; background:var(--pill); padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted); margin-top:6px; }
-      .grid { display:grid; gap:12px; }
-      .kpi-grid { grid-template-columns: 1fr; }
-      .card { background:var(--card); border:1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow); }
-      .card-pad { padding:14px; }
-      .kpi { text-align:center; }
-      .kpi .label { font-size:12px; letter-spacing:.04em; color:var(--muted); text-transform:uppercase; }
-      .kpi .value { font-size:28px; font-weight:800; }
-      .kpi .sub { margin-top:4px; font-size:13px; color:var(--muted);}
-      .nowrap { white-space: nowrap; }
-      .section-title { display:flex; align-items:center; gap:8px; font-weight:800; margin:14px 6px 8px; }
-      .section-title .dot { width:8px; height:8px; border-radius:999px; background:var(--accent); box-shadow:0 0 0 4px rgba(59,130,246,.15); }
-      .muted { color:var(--muted); font-size:14px; }
-      .pbar { position:relative; height:28px; border-radius:14px; background:var(--pill); border:1px solid var(--border); overflow:hidden; }
-      .pbar-fill { position:absolute; left:0; top:0; bottom:0; width:0; background:linear-gradient(90deg, var(--accent), var(--accent-2)); }
-      .pbar-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:800; }
-      .stats { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:8px; }
-      .stat { background:var(--pill); border:1px solid var(--border); border-radius:12px; padding:10px; text-align:center; }
-      .stat b { font-variant-numeric: tabular-nums; }
-      .table-wrap { overflow-x:auto; -webkit-overflow-scrolling: touch; }
-      table { border-collapse: separate; border-spacing: 0; width: 100%; }
-      th, td { padding:12px 10px; text-align:left; font-size:14px; border-bottom:1px solid var(--border); }
-      thead th { position:sticky; top:0; background:var(--card); z-index:1; }
-      tr:last-child td { border-bottom: 0; }
-      canvas { width:100% !important; height:auto !important; display:block; margin:0 auto; max-width: 100%; }
-      .chart-box { min-height: 150px; max-width: 460px; margin: 0 auto; }
-      .down { color: var(--down) !important; } .up { color: var(--up) !important; }
-      .center { text-align:center; }
-      .chips { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:8px; }
-      .chip { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; background:var(--pill); border:1px solid var(--border); border-radius:999px; font-size:13px; }
-      .chip b { font-variant-numeric: tabular-nums; }
-      .footer { display:flex; justify-content:center; gap:12px; color:var(--muted); font-size:13px; padding:8px 0; }
-      .btn { appearance:none; border:0; border-radius:12px; padding:10px 14px; font-weight:700; background:var(--accent); color:#fff; box-shadow:var(--shadow); cursor:pointer; }
-      .error{background:#3f1f1f;border:1px solid rgba(255,255,255,.12);color:#ffd1d1;padding:12px;border-radius:12px; margin-top:6px;}
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script>
-      window.RAPORT_ENDPOINT = "https://script.google.com/macros/s/AKfycbymwnWurFrti71e3PDkm658dfRswPE-OFjTGKs24TdxYi2aS2btOPTm2Hb5xsOLe4II9w/exec?path=/api/report/json";
-      window.APP_VERSION = "v3.5.0";
-    </script>
-    <script defer src="app.js?v=v3.4.2"></script>
-  </head>
-  <body>
-    <div class="statusbar-fix"></div>
-    <div class="safe">
-      <div class="wrap grid" style="gap:12px;">
-        <header class="header">
-          <div style="display:flex;align-items:center;justify-content:center;gap:10px;font-weight:800;font-size:18px;">
-            <img src="icon-192.png" width="26" height="26" style="border-radius:6px;"/><span>Raport Kredytowy</span>
-          </div>
-          <div class="badge" id="asOf">Ładowanie…</div>
-        </header>
-        <!-- KPI -->
-        <section class="grid kpi-grid">
-          <div class="card"><div class="card-pad kpi"><div class="label">WIBOR 3M</div><div class="value nowrap" id="wibor">—</div></div></div>
-          <div class="card"><div class="card-pad kpi"><div class="label">Obecna rata</div><div class="value nowrap" id="curr">—</div></div></div>
-          <div class="card"><div class="card-pad kpi"><div class="label">Szac. nowa rata</div><div class="value nowrap" id="new">—</div></div></div>
-          <div class="card"><div class="card-pad kpi"><div class="label">Różnica</div><div class="value nowrap" id="diff">—</div></div></div>
-          <div class="card"><div class="card-pad kpi"><div class="label">Ilość pozostałych rat</div><div class="value nowrap" id="raty">—</div><div class="sub" id="ratySub">—</div></div></div>
-        </section>
-        <!-- Postęp spłaty -->
-        <section>
-          <div class="section-title"><span class="dot"></span>Postęp spłaty</div>
-          <div class="card"><div class="card-pad">
-            <div class="pbar"><div class="pbar-fill" id="bar"></div><div class="pbar-label" id="barLabel">0%</div></div>
-            <div class="stats">
-              <div class="stat"><div class="muted">Kapitał początkowy</div><b class="nowrap" id="init">—</b></div>
-              <div class="stat"><div class="muted">Kapitał spłacony</div><b class="nowrap" id="paid">—</b></div>
-              <div class="stat"><div class="muted">Pozostało do spłaty</div><b class="nowrap" id="rem">—</b></div>
-              <div class="stat"><div class="muted">Spłacono</div><b class="nowrap" id="pct">—</b></div>
-            </div>
-          </div></div>
-        </section>
-        <!-- Struktura raty -->
-        <section>
-          <div class="section-title"><span class="dot"></span>Struktura najbliższej raty</div>
-          <div class="card"><div class="card-pad center">
-            <div class="chart-box" style="max-width: 340px;"><canvas id="pieChart"></canvas></div>
-            <div class="chips">
-              <span class="chip"><span style="width:10px;height:10px;border-radius:3px;background:var(--accent);display:inline-block"></span>Odsetki: <b class="nowrap" id="odsetki">—</b></span>
-              <span class="chip"><span style="width:10px;height:10px;border-radius:3px;background:var(--accent-2);display:inline-block"></span>Kapitał: <b class="nowrap" id="kapital">—</b></span>
-            </div>
-          </div></div>
-        </section>
-        <!-- WIBOR -->
-        <section>
-          <div class="section-title"><span class="dot"></span>Historia WIBOR 3M</div>
-          <div class="card"><div class="card-pad"><div class="chart-box"><canvas id="wiborChart"></canvas></div></div>
-          <div class="card-pad table-wrap" id="histTableWrap"></div></div>
-        </section>
-        <!-- FRA -->
-        <section>
-          <div class="section-title"><span class="dot"></span>Prognozy FRA</div>
-          <div class="card"><div class="card-pad"><div class="chart-box"><canvas id="fraChart"></canvas></div></div>
-          <div class="card-pad table-wrap" id="fraTableWrap"></div></div>
-        </section>
-        <div id="errorBox" style="display:none" class="error"></div>
-        <div class="footer">
-          <button id="retryBtn" class="btn" style="display:none" type="button">Spróbuj ponownie</button>
-          <button id="forceRefresh" class="btn" type="button">Wyczyść cache</button>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raport Kredytowy</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icon-192.png" sizes="192x192" type="image/png">
+  <meta name="theme-color" content="#0b1220">
+
+  <!-- CSS dla ładnych tabel -->
+  <style>
+    body { 
+      background: #121416; 
+      color: #e2e6e9; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif; 
+      margin: 0; 
+      padding: 0;
+    }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      border: 1px solid #334158; 
+      border-radius: 10px; 
+      margin-bottom: 1rem; 
+      background: #1f2937; 
+      color: #e2e6e9; 
+      overflow: hidden;
+    }
+    th, td { 
+      padding: 12px 16px; 
+      border: 1px solid #334158; 
+      text-align: left; 
+      vertical-align: middle; 
+      font-size: 14px;
+    }
+    th { 
+      font-weight: 600; 
+      background: #111827; 
+      color: #f8f9fa;
+    }
+    .value.up { 
+      color: #e65050; 
+      font-weight: 600; 
+    }
+    .value.down { 
+      color: #40c09e; 
+      font-weight: 600; 
+    }
+    section {
+      margin: 20px 0;
+    }
+    h2 {
+      color: #52b0ff;
+      margin-bottom: 10px;
+    }
+  </style>
+
+  <!-- Chart.js biblioteka -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Konfiguracja aplikacji -->
+  <script>
+    window.APP_VERSION = 'v3.5.0';
+    window.RAPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbymwnWurFrti71e3PDkm658dfRswPE-OFjTGKs24TdxYi2aS2btOPTm2Hb5xsOLe4II9w/exec?path=/api/report/json';
+    
+    // Funkcja getCSS dla Chart.js
+    function getCSS(property) {
+      return getComputedStyle(document.documentElement).getPropertyValue(property) || '#ffffff';
+    }
+  </script>
+</head>
+<body>
+
+<div id="app">
+  <header style="padding: 1rem; background-color: #0b1220; color: #52b0ff; text-align: center;">
+    <h1>📊 Raport Kredytowy</h1>
+    <div id="asOf">Ładowanie...</div>
+  </header>
+
+  <main style="padding: 1rem;">
+    <!-- Podstawowe dane kredytowe -->
+    <section>
+      <h2>💰 Dane kredytowe</h2>
+      <div>WIBOR 3M: <span id="wibor">–</span></div>
+      <div>Bieżąca rata: <span id="curr">–</span></div>
+      <div>Szacowana nowa rata: <span id="new">–</span></div>
+      <div>Różnica: <span id="diff">–</span></div>
+      <div>Pozostało rat: <span id="raty">–</span> <small id="ratySub"></small></div>
+    </section>
+
+    <!-- Postęp spłaty -->
+    <section>
+      <h2>📈 Postęp spłaty</h2>
+      <div><strong>Kapitał początkowy:</strong> <span id="init">–</span></div>
+      <div><strong>Kapitał spłacony:</strong> <span id="paid">–</span></div>
+      <div><strong>Pozostało do spłaty:</strong> <span id="rem">–</span></div>
+      <div style="background-color: #333; border-radius: 12px; margin: 10px 0; padding: 2px; height: 28px;">
+        <div id="bar" style="height: 24px; background: linear-gradient(90deg, #0066cc, #52b0ff); border-radius: 10px; width: 0%; transition: width 1s; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+          <span id="barLabel">0%</span>
         </div>
       </div>
-    </div>
+      <div>Spłacono: <span id="pct">–</span></div>
+    </section>
 
-    <!-- Funkcjonalność czyszczenia cache -->
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('forceRefresh').addEventListener('click', async function() {
-            const btn = this;
-            const originalText = btn.textContent;
-            
-            // Zmień tekst przycisku
-            btn.textContent = 'Czyszczę...';
-            btn.disabled = true;
-            
-            try {
-                // Wyczyść cache
-                if ('caches' in window) {
-                    const cacheNames = await caches.keys();
-                    await Promise.all(cacheNames.map(name => caches.delete(name)));
-                    console.log('Usunięto cache:', cacheNames);
-                }
-                
-                // Wyrejestruj Service Workers
-                if ('serviceWorker' in navigator) {
-                    const registrations = await navigator.serviceWorker.getRegistrations();
-                    await Promise.all(registrations.map(reg => reg.unregister()));
-                    console.log('Wyrejestrowano Service Workers:', registrations.length);
-                }
-                
-                // Przeładuj stronę
-                window.location.reload(true);
-                
-            } catch (error) {
-                console.error('Błąd czyszczenia cache:', error);
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
-        });
-    });
-    </script>
-  </body>
+    <!-- Wykres struktury raty -->
+    <section>
+      <h2>🥧 Struktura najbliższej raty</h2>
+      <div style="text-align: center;">
+        <canvas id="pieChart" width="250" height="250" style="display: block; margin: 1rem auto; background-color: transparent; border-radius: 12px;"></canvas>
+        <div style="display: flex; justify-content: center; gap: 2rem; margin-top: 10px;">
+          <div>
+            <span style="background: #3b82f6; padding: 4px 12px; border-radius: 8px; display: inline-block; margin-right: 8px;"></span>
+            Odsetki: <span id="odsetki">–</span>
+          </div>
+          <div>
+            <span style="background: #93c5fd; padding: 4px 12px; border-radius: 8px; display: inline-block; margin-right: 8px;"></span>
+            Kapitał: <span id="kapital">–</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Historia WIBOR -->
+    <section>
+      <h2>📊 Historia WIBOR 3M</h2>
+      <div id="histWrap">
+        <div id="histTableWrap"></div>
+      </div>
+    </section>
+
+    <!-- Prognozy FRA -->
+    <section>
+      <h2>🔮 Prognozy FRA</h2>
+      <div id="fraTableWrap"></div>
+    </section>
+  </main>
+
+  <!-- Komunikaty błędów -->
+  <div id="errorBox" style="color: #ff6b6b; background-color: #2d1b1b; padding: 15px; text-align: center; display: none; margin: 20px; border-radius: 8px; border: 1px solid #ff6b6b;"></div>
+  
+  <!-- Przycisk ponownego ładowania -->
+  <div style="text-align: center; margin: 20px;">
+    <button id="retryBtn" style="display: none; padding: 12px 24px; background-color: #52b0ff; border: none; color: white; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 16px;">
+      🔄 Spróbuj ponownie
+    </button>
+  </div>
+
+</div>
+
+<!-- JavaScript aplikacji -->
+<script src="./app.js"></script>
+
+</body>
 </html>
