@@ -1,4 +1,6 @@
-
+function getCSS(property) {
+    return getComputedStyle(document.documentElement).getPropertyValue(property) || '#ffffff';
+}
 (function(){
   const id = s => document.getElementById(s);
   const NBSP = '\u00A0';
