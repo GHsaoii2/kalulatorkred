@@ -50,7 +50,7 @@
     }
     #asOf{ display:block; text-align:center; }
 
-    /* KPI cards */
+    /* KPI */
     .kpi-grid{ display:grid; grid-template-columns:1fr; gap:10px; }
     .kpi{
       text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -65,13 +65,13 @@
     .pbar-fill{ position:absolute; left:0; top:0; bottom:0; width:0; background:linear-gradient(90deg,var(--accent),var(--accent-2)); }
     .pbar-label{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:800; }
 
-    /* Tables (global) */
+    /* Tabele */
     table{ width:100%; border-collapse:separate; border-spacing:0; }
     th,td{ padding:12px 14px; border-bottom:1px solid var(--border); font-size:14px; text-align:left; vertical-align:middle; }
     th{ color:#cfe2ff; }
     tr:last-child td{ border-bottom:0; }
 
-    /* FRA & WIBOR tables: nie łam linii w kolumnach 1 i 3 */
+    /* FRA & WIBOR: kolumny 1 i 3 bez zawijania */
     #fraTableWrap table td:nth-child(1),
     #fraTableWrap table td:nth-child(3),
     #fraTableWrap table th:nth-child(1),
@@ -79,29 +79,54 @@
     #histTableWrap table td:nth-child(1),
     #histTableWrap table td:nth-child(3),
     #histTableWrap table th:nth-child(1),
-    #histTableWrap table th:nth-child(3) {
-      white-space: nowrap;
+    #histTableWrap table th:nth-child(3){
+      white-space:nowrap;
     }
 
     /* Charts */
     .chart-box{ min-height:160px }
     canvas{ width:100%!important; height:auto!important; display:block }
 
-    /* Footer buttons */
+    /* Footer */
     .footer{ display:flex; justify-content:center; gap:10px }
     .btn{ appearance:none; border:0; border-radius:12px; padding:10px 14px; font-weight:700; background:var(--accent); color:#fff; cursor:pointer }
 
-    /* Accordion */
+    /* Accordion with iOS-like status dot */
     .acc-head{
-      width:100%; background:transparent; border:0; padding:14px;
-      display:flex; align-items:center; justify-content:center; gap:10px;
-      color:var(--accent); font-weight:800; font-size:18px; cursor:pointer;
+      position:relative;
+      width:100%;
+      background:transparent;
+      border:0;
+      padding:14px 40px;
+      display:flex;
+      align-items:center;
+      justify-content:center;      /* nagłówek wyśrodkowany */
+      color:var(--accent);
+      font-weight:800;
+      font-size:18px;
+      cursor:pointer;
+    }
+    .acc-dot{
+      position:absolute; left:16px; top:50%; transform:translateY(-50%);
+      width:12px; height:12px; border-radius:50%;
+      background:#3a3f46;                    /* szare gdy zamknięte */
+      box-shadow:0 0 0 rgba(16,185,129,0);
+      transition:background .2s ease, box-shadow .25s ease, transform .08s ease;
+    }
+    .acc-head:active .acc-dot{ transform:translateY(-50%) scale(0.95); }
+    .acc-head[aria-expanded="true"] .acc-dot{
+      background:var(--good);                 /* zielone gdy otwarte */
+      box-shadow:0 0 10px rgba(16,185,129,.45);
     }
     .acc-chev{
-      display:inline-block; width:10px; height:10px; border-right:2px solid var(--accent); border-bottom:2px solid var(--accent);
-      transform:rotate(-45deg); transition:transform .2s ease;
+      position:absolute; right:16px; top:50%; transform:translateY(-50%) rotate(-45deg);
+      width:10px; height:10px;
+      border-right:2px solid var(--accent);
+      border-bottom:2px solid var(--accent);
+      transition:transform .2s ease;
     }
-    .acc-head[aria-expanded="true"] .acc-chev{ transform:rotate(45deg); }
+    .acc-head[aria-expanded="true"] .acc-chev{ transform:translateY(-50%) rotate(45deg); }
+
     .acc-body{ display:none; }
     .acc-body.open{ display:block; }
   </style>
@@ -109,7 +134,7 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-  <!-- Konfiguracja dla app.js -->
+  <!-- Konfiguracja -->
   <script>
     window.APP_VERSION = 'v3.5.2'; /* tylko do cache/SW */
     window.RAPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbymwnWurFrti71e3PDkm658dfRswPE-OFjTGKs24TdxYi2aS2btOPTm2Hb5xsOLe4II9w/exec?path=/api/report/json';
@@ -128,7 +153,7 @@
         </div>
       </header>
 
-      <!-- KPI CARDS (zawsze widoczne) -->
+      <!-- KPI CARDS -->
       <section class="kpi-grid">
         <div class="card"><div class="pad kpi"><div class="label">WIBOR 3M</div><div class="value" id="wibor">—</div></div></div>
         <div class="card"><div class="pad kpi"><div class="label">Obecna rata</div><div class="value" id="curr">—</div></div></div>
@@ -137,10 +162,12 @@
         <div class="card"><div class="pad kpi"><div class="label">Pozostało rat</div><div class="value" id="raty">—</div><div style="color:var(--muted);margin-top:6px" id="ratySub">—</div></div></div>
       </section>
 
-      <!-- AKORDEON: POSTĘP SPŁATY -->
+      <!-- POSTĘP SPŁATY -->
       <section class="card">
         <button class="acc-head" data-target="acc-progress" aria-expanded="false">
-          <span class="acc-chev" aria-hidden="true"></span> Postęp spłaty
+          <span class="acc-dot" aria-hidden="true"></span>
+          Postęp spłaty
+          <span class="acc-chev" aria-hidden="true"></span>
         </button>
         <div id="acc-progress" class="acc-body">
           <div class="pad">
@@ -158,10 +185,12 @@
         </div>
       </section>
 
-      <!-- AKORDEON: STRUKTURA RATY -->
+      <!-- STRUKTURA RATY -->
       <section class="card">
         <button class="acc-head" data-target="acc-pie" aria-expanded="false">
-          <span class="acc-chev" aria-hidden="true"></span> Struktura najbliższej raty
+          <span class="acc-dot" aria-hidden="true"></span>
+          Struktura najbliższej raty
+          <span class="acc-chev" aria-hidden="true"></span>
         </button>
         <div id="acc-pie" class="acc-body">
           <div class="pad">
@@ -176,10 +205,12 @@
         </div>
       </section>
 
-      <!-- AKORDEON: WIBOR (wykres + tabela) -->
+      <!-- WIBOR -->
       <section class="card">
         <button class="acc-head" data-target="acc-wibor" aria-expanded="false">
-          <span class="acc-chev" aria-hidden="true"></span> Historia WIBOR 3M
+          <span class="acc-dot" aria-hidden="true"></span>
+          Historia WIBOR 3M
+          <span class="acc-chev" aria-hidden="true"></span>
         </button>
         <div id="acc-wibor" class="acc-body">
           <div class="pad">
@@ -189,10 +220,12 @@
         </div>
       </section>
 
-      <!-- AKORDEON: FRA (wykres + tabela) -->
+      <!-- FRA -->
       <section class="card">
         <button class="acc-head" data-target="acc-fra" aria-expanded="false">
-          <span class="acc-chev" aria-hidden="true"></span> Prognozy FRA
+          <span class="acc-dot" aria-hidden="true"></span>
+          Prognozy FRA
+          <span class="acc-chev" aria-hidden="true"></span>
         </button>
         <div id="acc-fra" class="acc-body">
           <div class="pad">
