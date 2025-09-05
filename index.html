@@ -73,9 +73,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
       window.RAPORT_ENDPOINT = "https://script.google.com/macros/s/AKfycbymwnWurFrti71e3PDkm658dfRswPE-OFjTGKs24TdxYi2aS2btOPTm2Hb5xsOLe4II9w/exec";
-      window.APP_VERSION = "v3.4.1";
+      window.APP_VERSION = "v3.4.2";
     </script>
-    <script defer src="app.js?v=v3.4.1"></script>
+    <script defer src="app.js?v=v3.4.2"></script>
   </head>
   <body>
     <div class="statusbar-fix"></div>
@@ -87,7 +87,6 @@
           </div>
           <div class="badge" id="asOf">Ładowanie…</div>
         </header>
-
         <!-- KPI -->
         <section class="grid kpi-grid">
           <div class="card"><div class="card-pad kpi"><div class="label">WIBOR 3M</div><div class="value nowrap" id="wibor">—</div></div></div>
@@ -96,7 +95,6 @@
           <div class="card"><div class="card-pad kpi"><div class="label">Różnica</div><div class="value nowrap" id="diff">—</div></div></div>
           <div class="card"><div class="card-pad kpi"><div class="label">Ilość pozostałych rat</div><div class="value nowrap" id="raty">—</div><div class="sub" id="ratySub">—</div></div></div>
         </section>
-
         <!-- Postęp spłaty -->
         <section>
           <div class="section-title"><span class="dot"></span>Postęp spłaty</div>
@@ -110,7 +108,6 @@
             </div>
           </div></div>
         </section>
-
         <!-- Struktura raty -->
         <section>
           <div class="section-title"><span class="dot"></span>Struktura najbliższej raty</div>
@@ -122,29 +119,62 @@
             </div>
           </div></div>
         </section>
-
         <!-- WIBOR -->
         <section>
           <div class="section-title"><span class="dot"></span>Historia WIBOR 3M</div>
           <div class="card"><div class="card-pad"><div class="chart-box"><canvas id="wiborChart"></canvas></div></div>
           <div class="card-pad table-wrap" id="histTableWrap"></div></div>
         </section>
-
         <!-- FRA -->
         <section>
           <div class="section-title"><span class="dot"></span>Prognozy FRA</div>
           <div class="card"><div class="card-pad"><div class="chart-box"><canvas id="fraChart"></canvas></div></div>
           <div class="card-pad table-wrap" id="fraTableWrap"></div></div>
         </section>
-
         <div id="errorBox" style="display:none" class="error"></div>
-
         <div class="footer">
           <button id="retryBtn" class="btn" style="display:none" type="button">Spróbuj ponownie</button>
           <button id="forceRefresh" class="btn" type="button">Wyczyść cache</button>
         </div>
-
       </div>
     </div>
+
+    <!-- Funkcjonalność czyszczenia cache -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('forceRefresh').addEventListener('click', async function() {
+            const btn = this;
+            const originalText = btn.textContent;
+            
+            // Zmień tekst przycisku
+            btn.textContent = 'Czyszczę...';
+            btn.disabled = true;
+            
+            try {
+                // Wyczyść cache
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                    console.log('Usunięto cache:', cacheNames);
+                }
+                
+                // Wyrejestruj Service Workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(registrations.map(reg => reg.unregister()));
+                    console.log('Wyrejestrowano Service Workers:', registrations.length);
+                }
+                
+                // Przeładuj stronę
+                window.location.reload(true);
+                
+            } catch (error) {
+                console.error('Błąd czyszczenia cache:', error);
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        });
+    });
+    </script>
   </body>
 </html>
