@@ -100,58 +100,77 @@
     }catch(e){ console.warn('Pie chart skipped:', e); }
   }
 
-  function safeWiborChart(rows){
-    try{
-      const wrap = id('histTableWrap');
-      if(!rows.length){ wrap.innerHTML = '<div class="muted center">Brak danych.</div>'; return; }
-      const last5 = rows.slice(0,5);
-      let html = '<table><thead><tr><th>Data</th><th>WIBOR 3M (%)</th><th>Zmiana</th></tr></thead><tbody>';
-      for(const r of last5){
-        const d=r[0], val=Number(r[1]||0), ch=Number(r[2]||0);
-        const cls = ch<0?'down':(ch>0?'up':'');
-        const sym = ch<0?'▼':(ch>0?'▲':'▬');
-        html += `<tr>
-          <td>${d}</td>
-          <td><b class="nowrap">${val.toFixed(2)}%</b></td>
-          <td class="nowrap ${cls}" style="font-weight:800">${sym} ${Math.abs(ch).toFixed(2)}</td>
-        </tr>`;
-      }
-      html += '</tbody></table>';
-      wrap.innerHTML = html;
+ function safeWiborChart(rows) {
+    try {
+        const wrap = id('histTableWrap');
+        if (!rows.length) {
+            wrap.innerHTML = '<p>Brak danych historycznych</p>';
+            return;
+        }
+        
+        let html = '<table style="width:100%;border-collapse:collapse;border:1px solid #dee2e6;border-radius:10px">';
+        html += '<tr>';
+        html += '<th style="border:1px solid #dee2e6;padding:12px;background:#f8f9fa">Data</th>';
+        html += '<th style="border:1px solid #dee2e6;padding:12px;background:#f8f9fa">WIBOR 3M (%)</th>';
+        html += '<th style="border:1px solid #dee2e6;padding:12px;background:#f8f9fa">Zmiana</th>';
+        html += '</tr>';
+        
+        rows.forEach(row => {
+            const d = row[0];
+            const val = Number(row[1]);
+            const ch = Number(row[2]);
+            const sym = ch > 0 ? '▲' : (ch < 0 ? '▼' : '▬');
+            const color = ch < 0 ? '#2a9d8f' : (ch > 0 ? '#e63946' : '#111827');
+            
+            html += '<tr>';
+            html += '<td style="border:1px solid #dee2e6;padding:12px">' + d + '</td>';
+            html += '<td style="border:1px solid #dee2e6;padding:12px"><b>' + val.toFixed(2) + '%</b></td>';
+            html += '<td style="border:1px solid #dee2e6;padding:12px;color:' + color + ';font-weight:600">' + sym + ' ' + Math.abs(ch).toFixed(2) + '</td>';
+            html += '</tr>';
+        });
+        
+        html += '</table>';
+        wrap.innerHTML = html;
+    } catch (e) {
+        console.warn('WIBOR chart error:', e);
+    }
+}
 
-      const labels = last5.map(r=>r[0]).reverse();
-      const values = last5.map(r=>Number(r[1]||0)).reverse();
-      const ctx = document.getElementById('wiborChart');
-      new Chart(ctx, { type:'line', data:{ labels, datasets:[{ data:values, tension:.35, fill:true, borderWidth:2, borderColor:'#3b82f6', pointRadius:3, backgroundColor:'rgba(59,130,246,.15)'}]},
-        options:{ plugins:{legend:{display:false}}, scales:{ x:{ ticks:{color:getCSS('--muted')}, grid:{display:false}}, y:{ ticks:{color:getCSS('--muted')}, grid:{color:'rgba(100,116,139,.15)'}} } });
-    }catch(e){ console.warn('WIBOR chart skipped:', e); }
-  }
-
-  function safeFraChart(rows){
-    try{
-      const wrap = id('fraTableWrap');
-      if(!rows.length){ wrap.innerHTML = '<div class="muted center">Brak prognoz FRA.</div>'; return; }
-      let html = '<table><thead><tr><th>Miesiąc raty</th><th>Prognozowana rata</th><th>Zmiana</th></tr></thead><tbody>';
-      for(const r of rows){
-        const label=r[0], val=Number(r[1]||0), ch=Number(r[2]||0);
-        const cls = ch<0?'down':(ch>0?'up':'');
-        const sym = ch<0?'▼':(ch>0?'▲':'▬');
-        html += `<tr>
-          <td>${label}</td>
-          <td><b class="nowrap">${val.toFixed(2)}${'\\u00A0'}zł</b></td>
-          <td class="nowrap ${cls}" style="font-weight:800">${sym} ${Math.abs(ch).toFixed(2)}${'\\u00A0'}zł</td>
-        </tr>`;
-      }
-      html += '</tbody></table>';
-      wrap.innerHTML = html;
-
-      const labels = rows.map(r=>r[0]);
-      const values = rows.map(r=>Number(r[1]||0));
-      const ctx = document.getElementById('fraChart');
-      new Chart(ctx, { type:'line', data:{ labels, datasets:[{ data:values, tension:.35, fill:true, borderWidth:2, borderColor:'#60a5fa', pointRadius:3, backgroundColor:'rgba(96,165,250,.15)'}]},
-        options:{ plugins:{legend:{display:false}}, scales:{ x:{ ticks:{color:getCSS('--muted')}, grid:{display:false}}, y:{ ticks:{color:getCSS('--muted')}, grid:{color:'rgba(100,116,139,.15)'}} } });
-    }catch(e){ console.warn('FRA chart skipped:', e); }
-  }
+ function safeFraChart(rows) {
+    try {
+        const wrap = id('fraTableWrap');
+        if (!rows.length) {
+            wrap.innerHTML = '<p>Brak prognoz FRA</p>';
+            return;
+        }
+        
+        let html = '<table style="width:100%;border-collapse:collapse;border:1px solid #dee2e6;border-radius:10px">';
+        html += '<tr>';
+        html += '<th style="border:1px solid #dee2e6;padding:12px;background:#f8f9fa">Miesiąc raty</th>';
+        html += '<th style="border:1px solid #dee2e6;padding:12px;background:#f8f9fa">Prognozowana rata</th>';
+        html += '<th style="border:1px solid #dee2e6;padding:12px;background:#f8f9fa">Zmiana</th>';
+        html += '</tr>';
+        
+        rows.forEach(row => {
+            const label = row[0];
+            const val = Number(row[1]);
+            const ch = Number(row[2]);
+            const sym = ch > 0 ? '▲' : (ch < 0 ? '▼' : '▬');
+            const color = ch < 0 ? '#2a9d8f' : (ch > 0 ? '#e63946' : '#111827');
+            
+            html += '<tr>';
+            html += '<td style="border:1px solid #dee2e6;padding:12px">' + label + '</td>';
+            html += '<td style="border:1px solid #dee2e6;padding:12px"><b>' + val.toFixed(2) + '\u00A0zł</b></td>';
+            html += '<td style="border:1px solid #dee2e6;padding:12px;color:' + color + ';font-weight:600">' + sym + ' ' + Math.abs(ch).toFixed(2) + '\u00A0zł</td>';
+            html += '</tr>';
+        });
+        
+        html += '</table>';
+        wrap.innerHTML = html;
+    } catch (e) {
+        console.warn('FRA chart error:', e);
+    }
+}
 
   function getCSS(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 
