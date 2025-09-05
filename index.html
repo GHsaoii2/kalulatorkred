@@ -17,12 +17,14 @@
         --border: #e6ecf5;
         --text: #0f172a;
         --muted: #667085;
-        --accent: #3b82f6;   /* primary blue */
-        --accent-2: #93c5fd; /* secondary blue */
+        --accent: #3b82f6;
+        --accent-2: #93c5fd;
         --pill: #f2f5fa;
         --shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
         --radius-xl: 22px;
         --radius-lg: 18px;
+        --down: #10b981; /* spadek = zielony */
+        --up:   #ef4444; /* wzrost = czerwony */
       }
       @media (prefers-color-scheme: dark) {
         :root {
@@ -38,9 +40,9 @@
                         max(24px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); }
       .wrap { width: 100%; max-width: 520px; margin: 0 auto; }
       .header { background:linear-gradient(180deg, rgba(59,130,246,.12), rgba(59,130,246,0) 70%), var(--card);
-                border:1px solid var(--border); border-radius: var(--radius-xl); padding:16px; box-shadow: var(--shadow); }
-      .title { display:flex; align-items:center; gap:12px; margin:0; font-weight:700; font-size:18px; }
-      .badge { background:var(--pill); padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted); }
+                border:1px solid var(--border); border-radius: var(--radius-xl); padding:14px; box-shadow: var(--shadow); }
+      .title { display:flex; align-items:center; justify-content:center; gap:10px; margin:0; font-weight:800; font-size:18px; text-align:center; }
+      .badge { display:inline-block; background:var(--pill); padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted); margin-top:6px; }
       .grid { display:grid; gap:12px; }
       .kpi-grid { grid-template-columns: 1fr; }
       .card { background:var(--card); border:1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow); }
@@ -48,30 +50,31 @@
       .kpi { text-align:center; }
       .kpi .label { font-size:12px; letter-spacing:.04em; color:var(--muted); text-transform:uppercase; }
       .kpi .value { font-size:28px; font-weight:800; }
-      .section-title { display:flex; align-items:center; gap:10px; font-weight:700; margin:14px 6px 8px; }
+      .section-title { display:flex; align-items:center; gap:8px; font-weight:800; margin:14px 6px 8px; }
       .section-title .dot { width:8px; height:8px; border-radius:999px; background:var(--accent); box-shadow:0 0 0 4px rgba(59,130,246,.15); }
       .muted { color:var(--muted); font-size:14px; }
       .stats { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:8px; }
       .stat { background:var(--pill); border:1px solid var(--border); border-radius:12px; padding:10px; text-align:center; }
       .stat b { font-variant-numeric: tabular-nums; }
-      .gauge-wrap { display:flex; justify-content:center; padding-top:6px; }
-      .gauge { width: 180px; height: 180px; border-radius:50%; background:conic-gradient(var(--accent) 0deg, var(--pill) 0);
-                position: relative; box-shadow: var(--shadow); }
-      .gauge::after { content:""; position:absolute; inset:16px; background:var(--card); border-radius:50%; }
-      .gauge-label { position:absolute; width:100%; height:100%; display:flex; align-items:center; justify-content:center;
-                      font-weight:800; font-size:22px; }
-      .center { text-align:center; }
-      .chips { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:8px; }
-      .chip { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; background:var(--pill); border:1px solid var(--border); border-radius:999px; font-size:13px; }
-      .chip b { font-variant-numeric: tabular-nums; }
+      /* Progress bar */
+      .pbar { position:relative; height:28px; border-radius:14px; background:var(--pill); border:1px solid var(--border); overflow:hidden; }
+      .pbar-fill { position:absolute; left:0; top:0; bottom:0; width:0; background:linear-gradient(90deg, var(--accent), var(--accent-2)); }
+      .pbar-label { position:absolute; left:0; right:0; top:0; bottom:0; display:flex; align-items:center; justify-content:center; font-weight:800; }
+      /* Tables & charts */
       .table-wrap { overflow-x:auto; -webkit-overflow-scrolling: touch; }
       table { border-collapse: separate; border-spacing: 0; width: 100%; }
       th, td { padding:12px 10px; text-align:left; font-size:14px; border-bottom:1px solid var(--border); }
       thead th { position:sticky; top:0; background:var(--card); z-index:1; }
       tr:last-child td { border-bottom: 0; }
       canvas { width:100% !important; height:auto !important; display:block; margin:0 auto; max-width: 100%; }
-      .chart-box { min-height: 150px; max-width: 100%; }
-      .footer { text-align:center; color:var(--muted); font-size:12px; margin-top:10px; }
+      .chart-box { min-height: 150px; max-width: 460px; margin: 0 auto; }
+      /* color helpers */
+      .down { color: var(--down) !important; }
+      .up   { color: var(--up)   !important; }
+      .center { text-align:center; }
+      .chips { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:8px; }
+      .chip { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; background:var(--pill); border:1px solid var(--border); border-radius:999px; font-size:13px; }
+      .chip b { font-variant-numeric: tabular-nums; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
@@ -82,14 +85,12 @@
   <body>
     <div class="safe">
       <div class="wrap grid" style="gap:12px;">
-        <header class="header">
+        <header class="header center">
           <div class="title">
-            <img src="icon-192.png" width="28" height="28" style="border-radius:7px;"/>
-            <div>
-              <div>Raport Kredytowy</div>
-              <div class="badge" id="asOf">Ładowanie…</div>
-            </div>
+            <img src="icon-192.png" width="26" height="26" style="border-radius:6px;"/>
+            <span>Raport Kredytowy</span>
           </div>
+          <div class="badge" id="asOf">Ładowanie…</div>
         </header>
 
         <!-- KPI (1-per-row, centered) -->
@@ -100,14 +101,13 @@
           <div class="card"><div class="card-pad kpi"><div class="label">Różnica</div><div class="value" id="diff">—</div></div></div>
         </section>
 
-        <!-- Postęp spłaty (radial gauge + czytelne staty) -->
+        <!-- Postęp spłaty (pasek z % w środku) -->
         <section>
           <div class="section-title"><span class="dot"></span>Postęp spłaty</div>
           <div class="card"><div class="card-pad">
-            <div class="gauge-wrap">
-              <div class="gauge" id="gauge">
-                <div class="gauge-label" id="gaugeLabel">0%</div>
-              </div>
+            <div class="pbar">
+              <div class="pbar-fill" id="bar"></div>
+              <div class="pbar-label" id="barLabel">0%</div>
             </div>
             <div class="stats">
               <div class="stat"><div class="muted">Kapitał początkowy</div><b id="init">—</b></div>
@@ -122,7 +122,7 @@
         <section>
           <div class="section-title"><span class="dot"></span>Struktura najbliższej raty</div>
           <div class="card"><div class="card-pad center">
-            <div class="chart-box" style="max-width: 360px; margin: 0 auto;"><canvas id="pieChart"></canvas></div>
+            <div class="chart-box" style="max-width: 340px;"><canvas id="pieChart"></canvas></div>
             <div class="chips">
               <span class="chip"><span style="width:10px;height:10px;border-radius:3px;background:var(--accent);display:inline-block"></span>Odsetki: <b id="odsetki">—</b></span>
               <span class="chip"><span style="width:10px;height:10px;border-radius:3px;background:var(--accent-2);display:inline-block"></span>Kapitał: <b id="kapital">—</b></span>
@@ -134,7 +134,7 @@
         <section>
           <div class="section-title"><span class="dot"></span>Historia WIBOR 3M</div>
           <div class="card"><div class="card-pad">
-            <div class="chart-box" style="max-width: 480px; margin: 0 auto;"><canvas id="wiborChart"></canvas></div>
+            <div class="chart-box"><canvas id="wiborChart"></canvas></div>
           </div>
           <div class="card-pad table-wrap" id="histTableWrap"></div></div>
         </section>
@@ -143,12 +143,12 @@
         <section>
           <div class="section-title"><span class="dot"></span>Prognozy FRA</div>
           <div class="card"><div class="card-pad">
-            <div class="chart-box" style="max-width: 480px; margin: 0 auto;"><canvas id="fraChart"></canvas></div>
+            <div class="chart-box"><canvas id="fraChart"></canvas></div>
           </div>
           <div class="card-pad table-wrap" id="fraTableWrap"></div></div>
         </section>
 
-        <div class="footer">PWA • Dodaj do ekranu początkowego</div>
+        <div class="footer center muted">PWA • Dodaj do ekranu początkowego</div>
       </div>
     </div>
 
