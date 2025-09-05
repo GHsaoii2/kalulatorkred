@@ -58,7 +58,7 @@ function getCSS(property) {
     try {
       const data = await fetchJson(window.RAPORT_ENDPOINT);
       LAST_DATA = data;
-      renderKPI(data);      // tylko KPI od razu
+      renderKPI(data);      // KPI od razu
       setupAccordions();    // podpinamy przełączniki
     } catch (e) {
       showError("Nie udało się pobrać raportu: " + e.message);
@@ -147,7 +147,7 @@ function getCSS(property) {
           if (targetId==='acc-pie')      renderPie(LAST_DATA);
           if (targetId==='acc-wibor')    renderWibor(LAST_DATA);
           if (targetId==='acc-fra')      renderFra(LAST_DATA);
-          // po otwarciu można zawołać resize wykresów
+          // po otwarciu przeliczenie rozmiarów wykresów
           setTimeout(()=>Object.values(CHARTS).forEach(ch=>ch?.resize?.()), 50);
         }
       };
@@ -166,6 +166,7 @@ function getCSS(property) {
   function num(x){ const n = Number(x); return isNaN(n)?null:n; }
   function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
 
+  // Donut: Struktura raty
   function safePie(interest, principal) {
     try {
       makeChart("pieChart", {
@@ -182,19 +183,24 @@ function getCSS(property) {
     } catch (e) { console.warn("Pie chart skipped:", e); }
   }
 
+  // WIBOR: wykres + tabela (ostatnie 5 dni)
   function safeWiborChart(rows) {
     try {
       const wrap = id("histTableWrap");
       if (!Array.isArray(rows) || !rows.length) { wrap.innerHTML = "<p>Brak danych historycznych</p>"; return; }
 
-      const last5 = rows.slice(0,5).reverse();
+      const last5 = rows.slice(0,5).reverse(); // oś od najstarszego
       const labels = last5.map(r=>r[0]);
       const values = last5.map(r=>Number(r[1]||0));
 
       makeChart("wiborChart", {
         type:"line",
         data:{ labels, datasets:[{ data:values, tension:.35, fill:true, borderWidth:2, borderColor:"#3b82f6", pointRadius:3, backgroundColor:"rgba(59,130,246,.15)"}]},
-        options:{ plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false},ticks:{color:"#94a3b8"}}, y:{grid:{color:"rgba(100,116,139,.15)"},ticks:{color:"#94a3b8"}} }, responsive:true, maintainAspectRatio:false }
+        options:{
+          plugins:{legend:{display:false}},
+          scales:{ x:{grid:{display:false},ticks:{color:"#94a3b8"}}, y:{grid:{color:"rgba(100,116,139,.15)"},ticks:{color:"#94a3b8"}} },
+          responsive:true, maintainAspectRatio:false
+        }
       });
 
       const table5 = rows.slice(0,5);
@@ -210,6 +216,7 @@ function getCSS(property) {
     } catch (e) { console.warn("WIBOR chart error:", e); }
   }
 
+  // FRA: wykres + tabela
   function safeFraChart(rows) {
     try {
       const wrap = id("fraTableWrap");
@@ -221,7 +228,11 @@ function getCSS(property) {
       makeChart("fraChart", {
         type:"line",
         data:{ labels, datasets:[{ data:values, tension:.35, fill:true, borderWidth:2, borderColor:"#60a5fa", pointRadius:3, backgroundColor:"rgba(96,165,250,.15)"}]},
-        options:{ plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false},ticks:{color:"#94a3b8"}}, y:{grid:{color:"rgba(100,116,139,.15)"},ticks:{color:"#94a3b8"}} }, responsive:true, maintainAspectRatio:false }
+        options:{
+          plugins:{legend:{display:false}},
+          scales:{ x:{grid:{display:false},ticks:{color:"#94a3b8"}}, y:{grid:{color:"rgba(100,116,139,.15)"},ticks:{color:"#94a3b8"}} },
+          responsive:true, maintainAspectRatio:false
+        }
       });
 
       let html = '<table class="tbl"><tr><th>Miesiąc raty</th><th>Prognozowana rata</th><th>Zmiana</th></tr>';
@@ -236,7 +247,7 @@ function getCSS(property) {
     } catch (e) { console.warn("FRA chart error:", e); }
   }
 
-  // Hard refresh
+  // Hard refresh (czyści cache i SW)
   async function hardRefresh() {
     try {
       const keys = await caches.keys();
