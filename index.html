@@ -46,15 +46,29 @@
     .acc-body{display:none}
     .acc-body.open{display:block}
 
-    /* pasek postępu – stabilny, label absolutny */
-    .progress-wrap{position:relative;background:#2c2c2c;border-radius:14px;margin:12px 0;height:28px;overflow:hidden}
-    .progress-bar{height:100%;border-radius:14px;background:linear-gradient(90deg,#0066cc,#52b0ff);width:0%}
-    .progress-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-      font-weight:800;color:#fff;pointer-events:none;user-select:none}
+    /* === Postęp spłaty: nowy kafelek === */
+    .progress-card{padding-top:6px}
+    .stat-grid{
+      display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0 14px;
+    }
+    @media (max-width:360px){ .stat-grid{grid-template-columns:1fr} }
+    .stat{
+      background:linear-gradient(180deg,#162130,#111827);
+      border:1px solid #2b3648;border-radius:14px;padding:12px 14px;
+      box-shadow:0 1px 3px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.02);
+    }
+    .stat .stat-label{font-size:12px;letter-spacing:.02em;color:var(--muted)}
+    .stat .stat-value{margin-top:4px;font-size:18px;font-weight:800;color:var(--text);white-space:nowrap}
 
-    /* wykresy – stałe rozmiary, centralnie */
+    .pill{position:relative;height:28px;background:#2b2b2b;border-radius:999px;overflow:hidden;border:1px solid #313131}
+    .pill .fill{height:100%;width:0%;background:linear-gradient(90deg,#1D4ED8,#60A5FA);border-radius:inherit;transition:width 900ms ease}
+    .pill .label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      font-weight:800;color:#fff;pointer-events:none;user-select:none;text-shadow:0 1px 1px rgba(0,0,0,.35)}
+    .progress-foot{margin-top:8px;font-size:13px;color:var(--muted);text-align:center}
+
+    /* wykresy */
     .chart-box{display:flex;justify-content:center}
-    canvas.chart-sm{width:320px; height:180px !important; max-width:100%;}
+    canvas.chart-sm{width:320px;height:180px!important;max-width:100%}
 
     /* tabele */
     table.tbl{width:100%;border-collapse:collapse;border:1px solid #334158;border-radius:12px;overflow:hidden}
@@ -65,11 +79,11 @@
   </style>
 
   <script>
-    window.APP_VERSION='v3.5.9';
+    window.APP_VERSION='v3.6.0';
     window.RAPORT_ENDPOINT='https://script.google.com/macros/s/AKfycbymwnWurFrti71e3PDkm658dfRswPE-OFjTGKs24TdxYi2aS2btOPTm2Hb5xsOLe4II9w/exec?path=/api/report/json';
   </script>
 
-  <!-- Chart.js (pin) + fallback -->
+  <!-- Chart.js (pin) + fallback offline -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer
     onerror="var s=document.createElement('script');s.src='./chart.4.4.3.min.js';s.defer=true;document.head.appendChild(s);"></script>
 </head>
@@ -95,20 +109,24 @@
       </div>
     </section>
 
-    <!-- Postęp spłaty -->
+    <!-- Postęp spłaty: nowy kafelek -->
     <section class="card">
       <button class="acc-head" data-target="acc-progress" aria-expanded="true">
         <span class="acc-dot"></span> Postęp spłaty <span class="acc-chev"></span>
       </button>
-      <div id="acc-progress" class="acc-body open">
+      <div id="acc-progress" class="acc-body open progress-card">
         <div class="pad">
-          <div><strong>Kapitał początkowy:</strong> <span id="init">–</span></div>
-          <div><strong>Kapitał spłacony:</strong> <span id="paid">–</span></div>
-          <div><strong>Pozostało do spłaty:</strong> <span id="rem">–</span></div>
-          <div class="progress-wrap">
-            <div id="bar" class="progress-bar"></div>
-            <div id="barLabel" class="progress-label">0%</div>
+          <div class="stat-grid">
+            <div class="stat"><div class="stat-label">Kapitał początkowy</div><div class="stat-value"><span id="init">–</span></div></div>
+            <div class="stat"><div class="stat-label">Kapitał spłacony</div><div class="stat-value"><span id="paid">–</span></div></div>
+            <div class="stat"><div class="stat-label">Pozostało do spłaty</div><div class="stat-value"><span id="rem">–</span></div></div>
+            <div class="stat"><div class="stat-label">Spłacono</div><div class="stat-value"><span id="pct">0%</span></div></div>
           </div>
+          <div class="pill" aria-label="Spłacono procent kapitału">
+            <div id="bar" class="fill"></div>
+            <div id="barLabel" class="label">0%</div>
+          </div>
+          <div class="progress-foot">To odsetek spłaconego kapitału w całym kredycie</div>
         </div>
       </div>
     </section>
@@ -154,6 +172,6 @@
   </main>
 
   <div id="errorBox"></div>
-  <script src="./app.js?v=v3.5.9" defer></script>
+  <script src="./app.js?v=v3.6.0" defer></script>
 </body>
 </html>
