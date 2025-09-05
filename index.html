@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Raport Kredytowy</title>
-    <meta name="theme-color" content="#0b1220">
+    <meta name="theme-color" content="#eaf2ff">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -12,16 +12,17 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <style>
       :root {
-        --bg: #f4f7fb;
+        --bg: #eef3fb;
         --card: #ffffff;
-        --border: #e9edf3;
+        --border: #e6ecf5;
         --text: #0f172a;
-        --muted: #64748b;
-        --accent: #3b82f6;       /* główny niebieski */
-        --accent-2: #93c5fd;     /* drugi odcień niebieskiego */
-        --pill: #f1f5f9;
+        --muted: #667085;
+        --accent: #3b82f6;   /* primary blue */
+        --accent-2: #93c5fd; /* secondary blue */
+        --pill: #f2f5fa;
         --shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
         --radius-xl: 22px;
+        --radius-lg: 18px;
       }
       @media (prefers-color-scheme: dark) {
         :root {
@@ -31,37 +32,46 @@
       }
       * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
       html, body { margin:0; padding:0; background:var(--bg); color:var(--text);
-        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
-      .safe { padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
-                        max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
-      .wrap { max-width: 860px; margin: 0 auto; }
-      .header { background:linear-gradient(180deg, rgba(59,130,246,.12), rgba(59,130,246,0) 80%), var(--card);
-                border:1px solid var(--border); border-radius: var(--radius-xl); padding:18px; box-shadow: var(--shadow); }
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        overflow-x: hidden; }
+      .safe { padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right))
+                        max(24px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); }
+      .wrap { width: 100%; max-width: 520px; margin: 0 auto; }
+      .header { background:linear-gradient(180deg, rgba(59,130,246,.12), rgba(59,130,246,0) 70%), var(--card);
+                border:1px solid var(--border); border-radius: var(--radius-xl); padding:16px; box-shadow: var(--shadow); }
       .title { display:flex; align-items:center; gap:12px; margin:0; font-weight:700; font-size:18px; }
       .badge { background:var(--pill); padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted); }
       .grid { display:grid; gap:12px; }
-      .kpi-grid { grid-template-columns: 1fr; } /* zawsze 1 kolumna na iPhone */
-      @media (min-width: 900px) { .kpi-grid { grid-template-columns: 1fr 1fr; } }
-      .card { background:var(--card); border:1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow); }
-      .card-pad { padding:16px; }
-      .kpi { display:flex; flex-direction:column; gap:6px; }
+      .kpi-grid { grid-template-columns: 1fr; }
+      .card { background:var(--card); border:1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow); }
+      .card-pad { padding:14px; }
+      .kpi { text-align:center; }
       .kpi .label { font-size:12px; letter-spacing:.04em; color:var(--muted); text-transform:uppercase; }
       .kpi .value { font-size:28px; font-weight:800; }
-      .section-title { display:flex; align-items:center; gap:10px; font-weight:700; margin:18px 4px 10px; }
-      .section-title .dot { width:9px; height:9px; border-radius:999px; background:var(--accent); box-shadow:0 0 0 4px rgba(59,130,246,.15); }
-      .row3 { display:grid; grid-template-columns: 1fr; gap:10px; }
+      .section-title { display:flex; align-items:center; gap:10px; font-weight:700; margin:14px 6px 8px; }
+      .section-title .dot { width:8px; height:8px; border-radius:999px; background:var(--accent); box-shadow:0 0 0 4px rgba(59,130,246,.15); }
       .muted { color:var(--muted); font-size:14px; }
-      .progress { height:36px; background:var(--pill); border-radius:18px; overflow:hidden; border:1px solid var(--border); }
-      .progress > div { height:100%; background:linear-gradient(90deg, var(--accent), var(--accent-2)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; }
-      .table-wrap { overflow-x:auto; -webkit-overflow-scrolling: touch; }
-      table { border-collapse: separate; border-spacing: 0; min-width: 560px; width: 100%; }
-      th, td { padding:12px 12px; text-align:left; font-size:14px; border-bottom:1px solid var(--border); }
-      thead th { position:sticky; top:0; background:var(--card); z-index:1; }
-      tr:last-child td { border-bottom: 0; }
+      .stats { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:8px; }
+      .stat { background:var(--pill); border:1px solid var(--border); border-radius:12px; padding:10px; text-align:center; }
+      .stat b { font-variant-numeric: tabular-nums; }
+      .gauge-wrap { display:flex; justify-content:center; padding-top:6px; }
+      .gauge { width: 180px; height: 180px; border-radius:50%; background:conic-gradient(var(--accent) 0deg, var(--pill) 0);
+                position: relative; box-shadow: var(--shadow); }
+      .gauge::after { content:""; position:absolute; inset:16px; background:var(--card); border-radius:50%; }
+      .gauge-label { position:absolute; width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+                      font-weight:800; font-size:22px; }
+      .center { text-align:center; }
+      .chips { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:8px; }
       .chip { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; background:var(--pill); border:1px solid var(--border); border-radius:999px; font-size:13px; }
       .chip b { font-variant-numeric: tabular-nums; }
-      canvas { width:100% !important; height:auto !important; }
-      .footer { text-align:center; color:var(--muted); font-size:12px; margin-top:14px; }
+      .table-wrap { overflow-x:auto; -webkit-overflow-scrolling: touch; }
+      table { border-collapse: separate; border-spacing: 0; width: 100%; }
+      th, td { padding:12px 10px; text-align:left; font-size:14px; border-bottom:1px solid var(--border); }
+      thead th { position:sticky; top:0; background:var(--card); z-index:1; }
+      tr:last-child td { border-bottom: 0; }
+      canvas { width:100% !important; height:auto !important; display:block; margin:0 auto; max-width: 100%; }
+      .chart-box { min-height: 150px; max-width: 100%; }
+      .footer { text-align:center; color:var(--muted); font-size:12px; margin-top:10px; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
@@ -71,7 +81,7 @@
   </head>
   <body>
     <div class="safe">
-      <div class="wrap grid" style="gap:14px;">
+      <div class="wrap grid" style="gap:12px;">
         <header class="header">
           <div class="title">
             <img src="icon-192.png" width="28" height="28" style="border-radius:7px;"/>
@@ -82,7 +92,7 @@
           </div>
         </header>
 
-        <!-- KPI -->
+        <!-- KPI (1-per-row, centered) -->
         <section class="grid kpi-grid">
           <div class="card"><div class="card-pad kpi"><div class="label">WIBOR 3M</div><div class="value" id="wibor">—</div></div></div>
           <div class="card"><div class="card-pad kpi"><div class="label">Obecna rata</div><div class="value" id="curr">—</div></div></div>
@@ -90,48 +100,50 @@
           <div class="card"><div class="card-pad kpi"><div class="label">Różnica</div><div class="value" id="diff">—</div></div></div>
         </section>
 
-        <!-- Postęp spłaty (bardziej widoczny) -->
+        <!-- Postęp spłaty (radial gauge + czytelne staty) -->
         <section>
           <div class="section-title"><span class="dot"></span>Postęp spłaty</div>
           <div class="card"><div class="card-pad">
-            <div class="row3">
-              <div class="muted">Kapitał początkowy<br><b id="init">—</b></div>
-              <div class="muted">Kapitał spłacony<br><b id="paid">—</b></div>
-              <div class="muted">Pozostało do spłaty<br><b id="rem">—</b></div>
+            <div class="gauge-wrap">
+              <div class="gauge" id="gauge">
+                <div class="gauge-label" id="gaugeLabel">0%</div>
+              </div>
             </div>
-            <div style="margin-top:12px;">
-              <div class="muted"><b id="pct">0%</b> kapitału spłacone</div>
-              <div class="progress" style="margin-top:8px;"><div id="bar" style="width:0%">0%</div></div>
+            <div class="stats">
+              <div class="stat"><div class="muted">Kapitał początkowy</div><b id="init">—</b></div>
+              <div class="stat"><div class="muted">Kapitał spłacony</div><b id="paid">—</b></div>
+              <div class="stat"><div class="muted">Pozostało do spłaty</div><b id="rem">—</b></div>
+              <div class="stat"><div class="muted">Spłacono</div><b id="pct">—</b></div>
             </div>
           </div></div>
         </section>
 
-        <!-- Struktura raty (mniejszy wykres + kwoty) -->
+        <!-- Struktura raty (mniejszy donut + wyśrodkowane wartości) -->
         <section>
           <div class="section-title"><span class="dot"></span>Struktura najbliższej raty</div>
-          <div class="card"><div class="card-pad">
-            <div style="min-height:180px"><canvas id="pieChart" aria-label="Udział odsetek i kapitału"></canvas></div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+          <div class="card"><div class="card-pad center">
+            <div class="chart-box" style="max-width: 360px; margin: 0 auto;"><canvas id="pieChart"></canvas></div>
+            <div class="chips">
               <span class="chip"><span style="width:10px;height:10px;border-radius:3px;background:var(--accent);display:inline-block"></span>Odsetki: <b id="odsetki">—</b></span>
               <span class="chip"><span style="width:10px;height:10px;border-radius:3px;background:var(--accent-2);display:inline-block"></span>Kapitał: <b id="kapital">—</b></span>
             </div>
           </div></div>
         </section>
 
-        <!-- Historia WIBOR (ostatnie 5 dni) -->
+        <!-- WIBOR (ostatnie 5 dni) -->
         <section>
           <div class="section-title"><span class="dot"></span>Historia WIBOR 3M</div>
           <div class="card"><div class="card-pad">
-            <div style="min-height:180px"><canvas id="wiborChart"></canvas></div>
+            <div class="chart-box" style="max-width: 480px; margin: 0 auto;"><canvas id="wiborChart"></canvas></div>
           </div>
           <div class="card-pad table-wrap" id="histTableWrap"></div></div>
         </section>
 
-        <!-- Prognozy FRA (liniowy, mniejszy) -->
+        <!-- FRA (liniowy, mniejszy, dopasowany do WIBOR) -->
         <section>
           <div class="section-title"><span class="dot"></span>Prognozy FRA</div>
           <div class="card"><div class="card-pad">
-            <div style="min-height:180px"><canvas id="fraChart"></canvas></div>
+            <div class="chart-box" style="max-width: 480px; margin: 0 auto;"><canvas id="fraChart"></canvas></div>
           </div>
           <div class="card-pad table-wrap" id="fraTableWrap"></div></div>
         </section>

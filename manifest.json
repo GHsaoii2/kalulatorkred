@@ -3,8 +3,8 @@
   "short_name": "Raport",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#f4f7fb",
-  "theme_color": "#0b1220",
+  "background_color": "#eef3fb",
+  "theme_color": "#eaf2ff",
   "icons": [
     {
       "src": "icon-192.png",
