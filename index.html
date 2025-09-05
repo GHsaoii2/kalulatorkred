@@ -4,120 +4,132 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Raport Kredytowy</title>
-    <meta name="theme-color" content="#1d3557">
+    <meta name="theme-color" content="#0b1220">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <style>
       :root {
-        --primary: #1d3557;
-        --muted: #6b7683;
-        --bg: #f0f2f5;
-        --card: #ffffff;
-        --border: #e6e9ef;
+        --bg: #0b1220;
+        --card: #0f172a;
+        --border: rgba(255,255,255,0.08);
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --accent: #4f9cf9;
+        --accent-2: #22c55e;
+        --pill: rgba(255,255,255,0.06);
+        --shadow: 0 10px 30px rgba(0,0,0,0.35);
+        --radius-xl: 22px;
       }
-      * { box-sizing: border-box; }
-      html, body { margin:0; padding:0; background:var(--bg); color:#111827; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-      .wrap { max-width: 960px; margin: 0 auto; padding: 16px; }
-      .header { background:var(--primary); color:#fff; padding:24px; border-radius:20px; }
-      .title { margin:0; font-size:20px; font-weight:700; }
-      .subtitle { margin:6px 0 0; opacity:.85; font-size:14px; }
-      .grid { display:grid; grid-template-columns: 1fr; gap:12px; }
-      @media (min-width: 640px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
-      .card { background:var(--card); border:1px solid var(--border); border-radius:16px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg:#f2f4f8; --card:#ffffff; --border:#e6e9ef; --text:#111827; --muted:#6b7280;
+          --pill:#f3f4f6; --shadow:0 10px 24px rgba(17,24,39,0.08);
+        }
+      }
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html, body { margin:0; padding:0; background:var(--bg); color:var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+      .safe { padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+                        max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+      .wrap { max-width: 860px; margin: 0 auto; }
+      .header { background:linear-gradient(180deg, rgba(79,156,249,.25), rgba(79,156,249,0) 80%), var(--card);
+                border:1px solid var(--border); border-radius: var(--radius-xl); padding:20px 18px; box-shadow: var(--shadow); }
+      .title { display:flex; align-items:center; gap:12px; margin:0; font-weight:700; font-size:18px; }
+      .badge { background:var(--pill); padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted); }
+      .grid { display:grid; gap:12px; }
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .card { background:var(--card); border:1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow); }
       .card-pad { padding:16px; }
-      .kpi-title { font-size:12px; text-transform: uppercase; letter-spacing:.08em; color:var(--muted); }
-      .kpi-value { font-size:24px; font-weight:700; color:#1f2937; }
-      h2 { color:var(--primary); font-size:16px; margin:16px 0 8px; }
-      table { width:100%; border-collapse: collapse; }
-      th, td { border:1px solid #dee2e6; padding:10px; font-size:14px; text-align:left; }
-      thead th { background:#f8f9fa; font-weight:600; }
-      .progress { height:28px; background:#e6edf5; border-radius:14px; overflow:hidden; }
-      .progress > div { height:100%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; }
-      .legend { font-size:13px; color:#495057; }
-      .legend-sq { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; }
-      .center { text-align:center; }
-      .row { display:grid; grid-template-columns: 1fr; gap:10px; }
-      @media (min-width: 640px) { .row-3 { grid-template-columns: 1fr 1fr 1fr; } }
-      .muted { color:#6b7280; }
-      .footer { text-align:center; font-size:12px; color:#6b7280; margin: 18px 0; }
+      .kpi { display:flex; flex-direction:column; align-items:center; gap:6px; }
+      .kpi .label { font-size:12px; letter-spacing:.04em; color:var(--muted); text-transform:uppercase; }
+      .kpi .value { font-size:26px; font-weight:800; }
+      .section-title { display:flex; align-items:center; gap:10px; font-weight:700; margin:18px 4px 10px; }
+      .section-title .dot { width:9px; height:9px; border-radius:999px; background:var(--accent); box-shadow:0 0 0 4px rgba(79,156,249,.15); }
+      .row3 { display:grid; grid-template-columns: 1fr; gap:10px; }
+      @media (min-width: 680px) { .row3 { grid-template-columns: 1fr 1fr 1fr; } }
+      .muted { color:var(--muted); font-size:14px; }
+      .progress { height:28px; background:var(--pill); border-radius:14px; overflow:hidden; border:1px solid var(--border); }
+      .progress > div { height:100%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; }
+      .table-wrap { overflow-x:auto; -webkit-overflow-scrolling: touch; }
+      table { border-collapse: separate; border-spacing: 0; min-width: 560px; width: 100%; }
+      th, td { padding:12px 12px; text-align:left; font-size:14px; border-bottom:1px solid var(--border); }
+      thead th { position:sticky; top:0; background:var(--card); z-index:1; }
+      tr:last-child td { border-bottom: 0; }
+      .chip-up { color:#ef4444; background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.25); }
+      .chip-down { color:#10b981; background:rgba(16,185,129,.12); border:1px solid rgba(16,185,129,.25); }
+      .chip { font-weight:700; display:inline-block; padding:4px 9px; border-radius:999px; font-size:13px; }
+      canvas { width:100% !important; height:auto !important; }
+      .footer { text-align:center; color:var(--muted); font-size:12px; margin-top:14px; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
-      // Register SW
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
-      }
-      // Config
-      window.RAPORT_ENDPOINT = "https://YOUR-APPS-SCRIPT-WEBAPP-URL/exec?path=/api/report/json"; // <- podmień na swój URL Apps Script
+      if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js')); }
+      window.RAPORT_ENDPOINT = "https://script.google.com/macros/s/AKfycbymwnWurFrti71e3PDkm658dfRswPE-OFjTGKs24TdxYi2aS2btOPTm2Hb5xsOLe4II9w/exec?path=/api/report/json";
     </script>
   </head>
   <body>
-    <div class="wrap">
-      <header class="header">
-        <h1 class="title">Twój Zaawansowany Raport Kredytowy</h1>
-        <p class="subtitle" id="asOf">Ładowanie...</p>
-      </header>
+    <div class="safe">
+      <div class="wrap grid" style="gap:14px;">
+        <header class="header">
+          <div class="title">
+            <img src="icon-192.png" width="28" height="28" style="border-radius:7px;"/>
+            <div>
+              <div>Raport Kredytowy</div>
+              <div class="badge" id="asOf">Ładowanie…</div>
+            </div>
+          </div>
+        </header>
 
-      <section class="grid grid-2" style="margin-top:12px;">
-        <div class="card"><div class="card-pad center"><div class="kpi-title">WIBOR 3M</div><div class="kpi-value" id="wibor">—</div></div></div>
-        <div class="card"><div class="card-pad center"><div class="kpi-title">Obecna rata</div><div class="kpi-value" id="curr">—</div></div></div>
-        <div class="card"><div class="card-pad center"><div class="kpi-title">Szac. nowa rata</div><div class="kpi-value" id="new">—</div></div></div>
-        <div class="card"><div class="card-pad center"><div class="kpi-title">Różnica</div><div class="kpi-value" id="diff">—</div></div></div>
-      </section>
+        <section class="grid kpi-grid">
+          <div class="card"><div class="card-pad kpi"><div class="label">WIBOR 3M</div><div class="value" id="wibor">—</div></div></div>
+          <div class="card"><div class="card-pad kpi"><div class="label">Obecna rata</div><div class="value" id="curr">—</div></div></div>
+          <div class="card"><div class="card-pad kpi"><div class="label">Szac. nowa rata</div><div class="value" id="new">—</div></div></div>
+          <div class="card"><div class="card-pad kpi"><div class="label">Różnica</div><div class="value" id="diff">—</div></div></div>
+        </section>
 
-      <section>
-        <h2>🚗 Postęp spłaty</h2>
-        <div class="card">
-          <div class="card-pad">
-            <div class="row row-3">
-              <div class="muted">Kapitał początkowy:<br><b id="init">—</b></div>
-              <div class="muted">Kapitał spłacony:<br><b id="paid">—</b></div>
-              <div class="muted">Pozostało do spłaty:<br><b id="rem">—</b></div>
+        <section>
+          <div class="section-title"><span class="dot"></span>Postęp spłaty</div>
+          <div class="card"><div class="card-pad">
+            <div class="row3">
+              <div class="muted">Kapitał początkowy<br><b id="init">—</b></div>
+              <div class="muted">Kapitał spłacony<br><b id="paid">—</b></div>
+              <div class="muted">Pozostało do spłaty<br><b id="rem">—</b></div>
             </div>
             <div style="margin-top:12px;">
               <div class="muted">Spłacono już <b id="pct">—</b> kapitału</div>
-              <div class="progress" style="margin-top:6px;"><div id="bar" style="width:0%">0%</div></div>
+              <div class="progress" style="margin-top:8px;"><div id="bar" style="width:0%">0%</div></div>
             </div>
-          </div>
-        </div>
-      </section>
+          </div></div>
+        </section>
 
-      <section>
-        <h2>⛳ Struktura Najbliższej Raty</h2>
-        <div class="card">
-          <div class="card-pad center">
-            <img id="pie" alt="Struktura raty" style="max-width:100%;height:auto;display:block;margin:0 auto;border:0" />
-            <div class="legend" style="margin-top:8px;">
-              <span class="legend-sq" style="background:#1d3557"></span>Odsetki: <b id="odsetki">—</b>
-              &nbsp;&nbsp;&nbsp;
-              <span class="legend-sq" style="background:#a8dadc"></span>Kapitał: <b id="kapital">—</b>
-            </div>
-          </div>
-        </div>
-      </section>
+        <section>
+          <div class="section-title"><span class="dot"></span>Struktura najbliższej raty</div>
+          <div class="card"><div class="card-pad">
+            <canvas id="pieChart" aria-label="Udział odsetek i kapitału"></canvas>
+          </div></div>
+        </section>
 
-      <section>
-        <h2>📈 Historia WIBOR 3M</h2>
-        <div class="card">
-          <div class="card-pad">
-            <img id="wiborChart" alt="Wykres WIBOR 3M" style="max-width:100%;height:auto;display:block;margin:0 auto;border:0" />
+        <section>
+          <div class="section-title"><span class="dot"></span>Historia WIBOR 3M</div>
+          <div class="card"><div class="card-pad">
+            <canvas id="wiborChart"></canvas>
           </div>
-          <div class="card-pad" id="histTableWrap"></div>
-        </div>
-      </section>
+          <div class="card-pad table-wrap" id="histTableWrap"></div></div>
+        </section>
 
-      <section>
-        <h2>📊 Prognozy FRA</h2>
-        <div class="card">
-          <div class="card-pad">
-            <img id="fraChart" alt="Wykres prognoz FRA" style="max-width:100%;height:auto;display:block;margin:0 auto;border:0" />
+        <section>
+          <div class="section-title"><span class="dot"></span>Prognozy FRA</div>
+          <div class="card"><div class="card-pad">
+            <canvas id="fraChart"></canvas>
           </div>
-          <div class="card-pad" id="fraTableWrap"></div>
-        </div>
-      </section>
+          <div class="card-pad table-wrap" id="fraTableWrap"></div></div>
+        </section>
 
-      <div class="footer">Dodaj do ekranu początkowego, aby używać jak natywnej aplikacji.</div>
+        <div class="footer">iOS-style PWA • Dodaj do ekranu początkowego</div>
+      </div>
     </div>
 
     <script src="app.js"></script>

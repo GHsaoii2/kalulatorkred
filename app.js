@@ -2,92 +2,55 @@
 (function() {
   const PLN = v => (v==null?'-':(Number(v).toFixed(2) + ' zł'));
   const PCT = v => (v==null?'-':(Number(v).toFixed(2) + '%'));
-  const byId = id => document.getElementById(id);
-
-  const demo = {
-    asOf: "2025-09-05",
-    wibor3m: 4.79,
-    currentInstallment: 5402.34,
-    newInstallment: 5173.10,
-    installmentDiff: 5173.10 - 5402.34,
-    initialLoan: 786376.00,
-    remainingLoan: 781147.39,
-    capitalPaid: 5228.61,
-    capitalPaidPct: 0.7,
-    installmentParts: { interest: 2310.12, principal: 2526.47 },
-    history: [
-      ["2025-09-05", 4.77, -0.02],
-      ["2025-09-04", 4.79, -0.02],
-      ["2025-09-03", 4.81, -0.01],
-      ["2025-09-02", 4.82, 0.00],
-      ["2025-09-01", 4.82, 0.00],
-      ["2025-08-31", 4.82, 0.00],
-      ["2025-08-30", 4.81, 0.00]
-    ],
-    fraProjections: [
-      ["Styczeń 2026", 4998.54, -403.80],
-      ["Kwiecień 2026", 4836.59, -565.75],
-      ["Lipiec 2026", 4696.80, -705.54],
-      ["Wrzesień 2026", 4696.80, -705.54]
-    ]
-  };
+  const id  = s => document.getElementById(s);
 
   async function load() {
-    let data = demo;
+    let data = null;
     try {
-      const endpoint = window.RAPORT_ENDPOINT;
-      if (endpoint && endpoint.indexOf('YOUR-APPS-SCRIPT-WEBAPP-URL') === -1) {
-        const resp = await fetch(endpoint, { cache: 'no-store' });
-        if (resp.ok) data = await resp.json();
-      }
-    } catch (e) { console.warn('Fallback to demo data:', e); }
+      const resp = await fetch(window.RAPORT_ENDPOINT, { cache: 'no-store' });
+      if (resp.ok) data = await resp.json();
+    } catch (e) { console.warn('Fetch error:', e); }
+    if (!data) { id('asOf').textContent = 'Błąd pobierania danych'; return; }
 
-    // Fill header/KPI
-    byId('asOf').textContent = 'Stan na ' + (data.asOf || '—');
-    byId('wibor').textContent = PCT(data.wibor3m);
-    byId('curr').textContent = PLN(data.currentInstallment);
-    byId('new').textContent = PLN(data.newInstallment);
+    // Header/KPI
+    id('asOf').textContent = 'Stan na ' + (data.asOf || '—');
+    id('wibor').textContent = PCT(data.wibor3m);
+    id('curr').textContent  = PLN(data.currentInstallment);
+    id('new').textContent   = PLN(data.newInstallment);
     const diff = Number(data.newInstallment) - Number(data.currentInstallment);
-    const diffUp = diff >= 0;
-    byId('diff').textContent = (diffUp ? '▲ +' : '▼ ') + Math.abs(diff).toFixed(2) + ' zł';
-    byId('diff').style.color = diffUp ? '#e11d48' : '#059669';
+    const up = diff >= 0; id('diff').textContent = (up ? '▲ +' : '▼ ') + Math.abs(diff).toFixed(2) + ' zł';
+    id('diff').style.color = up ? '#ef4444' : '#10b981';
 
     // Progress
-    byId('init').textContent = PLN(data.initialLoan);
-    byId('paid').textContent = PLN(data.capitalPaid);
-    byId('rem').textContent  = PLN(data.remainingLoan);
-    const pct = Number(data.capitalPaidPct);
-    const pctTxt = isNaN(pct) ? '0%' : pct.toFixed(1) + '%';
-    byId('pct').textContent = pctTxt;
-    byId('bar').style.width = pctTxt;
-    byId('bar').textContent = pctTxt;
+    id('init').textContent = PLN(data.initialLoan);
+    id('paid').textContent = PLN(data.capitalPaid);
+    id('rem').textContent  = PLN(data.remainingLoan);
+    const pct = Number(data.capitalPaidPct); const pctTxt = isNaN(pct) ? '0%' : pct.toFixed(1) + '%';
+    id('pct').textContent = pctTxt; id('bar').style.width = pctTxt; id('bar').textContent = pctTxt;
 
     // Tables
     renderHistoryTable(data.history);
     renderFraTable(data.fraProjections);
 
-    // Charts (optional images from your mailer; provide URLs or leave blank)
-    // You can later pipe your PNGs from Apps Script, e.g. ?path=/api/charts/wibor
-    byId('wiborChart').src = '';
-    byId('fraChart').src = '';
-    byId('pie').src = '';
-    byId('odsetki').textContent = PLN(data.installmentParts?.interest);
-    byId('kapital').textContent = PLN(data.installmentParts?.principal);
+    // Charts
+    drawPie(data.installmentParts?.interest || 0, data.installmentParts?.principal || 0);
+    drawWibor(data.history || []);
+    drawFra(data.fraProjections || []);
   }
 
   function renderHistoryTable(rows) {
-    const wrap = document.getElementById('histTableWrap');
+    const wrap = id('histTableWrap');
     if (!rows || !rows.length) { wrap.innerHTML = '<div class="muted">Brak danych.</div>'; return; }
     let html = '<table><thead><tr><th>Data</th><th>WIBOR 3M (%)</th><th>Zmiana</th></tr></thead><tbody>';
     for (const r of rows) {
       const d = r[0], val = Number(r[1]||0), ch = Number(r[2]||0);
       const up = ch > 0, down = ch < 0;
-      const color = down ? '#059669' : (up ? '#e11d48' : '#111827');
+      const cls = down ? 'chip chip-down' : (up ? 'chip chip-up' : 'chip');
       const sym = down ? '▼' : (up ? '▲' : '▬');
       html += `<tr>
         <td>${d}</td>
         <td><b>${val.toFixed(2)}%</b></td>
-        <td style="color:${color};font-weight:600">${sym} ${Math.abs(ch).toFixed(2)}</td>
+        <td><span class="${cls}">${sym} ${Math.abs(ch).toFixed(2)}</span></td>
       </tr>`;
     }
     html += '</tbody></table>';
@@ -95,23 +58,83 @@
   }
 
   function renderFraTable(rows) {
-    const wrap = document.getElementById('fraTableWrap');
+    const wrap = id('fraTableWrap');
     if (!rows || !rows.length) { wrap.innerHTML = '<div class="muted">Brak prognoz FRA.</div>'; return; }
     let html = '<table><thead><tr><th>Miesiąc raty</th><th>Prognozowana rata</th><th>Zmiana</th></tr></thead><tbody>';
     for (const r of rows) {
       const label = r[0], val = Number(r[1]||0), ch = Number(r[2]||0);
       const up = ch > 0, down = ch < 0;
-      const color = down ? '#059669' : (up ? '#e11d48' : '#111827');
+      const cls = down ? 'chip chip-down' : (up ? 'chip chip-up' : 'chip');
       const sym = down ? '▼' : (up ? '▲' : '▬');
       html += `<tr>
         <td>${label}</td>
         <td><b>${val.toFixed(2)} zł</b></td>
-        <td style="color:${color};font-weight:600">${sym} ${Math.abs(ch).toFixed(2)} zł</td>
+        <td><span class="${cls}">${sym} ${Math.abs(ch).toFixed(2)} zł</span></td>
       </tr>`;
     }
     html += '</tbody></table>';
     wrap.innerHTML = html;
   }
+
+  function drawPie(interest, principal) {
+    const ctx = document.getElementById('pieChart');
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Odsetki', 'Kapitał'],
+        datasets: [{
+          data: [interest, principal],
+          borderWidth: 0,
+          backgroundColor: ['#4f9cf9', '#22c55e']
+        }]
+      },
+      options: {
+        plugins: { legend: { display: true, labels: { color: getTextColor() } } },
+        cutout: '58%',
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+    ctx.parentElement.style.minHeight = '240px';
+  }
+
+  function drawWibor(rows) {
+    const labels = rows.map(r => r[0]).reverse();
+    const values = rows.map(r => Number(r[1]||0)).reverse();
+    const ctx = document.getElementById('wiborChart');
+    new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets: [{ data: values, tension:.35, fill: true, borderWidth:2, borderColor:'#4f9cf9',
+        pointRadius: 2, pointHoverRadius: 4, backgroundColor:'rgba(79,156,249,.12)'}] },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: getMutedColor() } , grid: { color: 'rgba(128,128,128,.12)' } },
+          y: { ticks: { color: getMutedColor() }, grid: { color: 'rgba(128,128,128,.12)' } }
+        }
+      }
+    });
+  }
+
+  function drawFra(rows) {
+    const labels = rows.map(r => r[0]);
+    const values = rows.map(r => Number(r[1]||0));
+    const ctx = document.getElementById('fraChart');
+    new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [{ data: values, backgroundColor: '#22c55e' }] },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: getMutedColor() } , grid: { display:false } },
+          y: { ticks: { color: getMutedColor() }, grid: { color: 'rgba(128,128,128,.12)' } }
+        }
+      }
+    });
+  }
+
+  function getTextColor() { return getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#e5e7eb'; }
+  function getMutedColor() { return getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#9ca3af'; }
 
   load();
 })();
