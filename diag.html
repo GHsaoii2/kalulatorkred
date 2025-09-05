@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diag – Raport Kredytowy</title>
+  <style> body{font-family:system-ui, -apple-system; margin:20px} pre{white-space:pre-wrap; word-break:break-word; background:#f4f4f8; padding:12px; border-radius:8px} input,button{font-size:16px} </style>
+</head>
+<body>
+  <h2>Diagnostyka endpointu</h2>
+  <p>Domyślny endpoint:</p>
+  <input id="url" style="width:100%" value="https://script.google.com/macros/s/AKfycbymwnWurFrti71e3PDkm658dfRswPE-OFjTGKs24TdxYi2aS2btOPTm2Hb5xsOLe4II9w/exec?path=/api/report/json"/>
+  <p><button id="go">Pobierz</button></p>
+  <pre id="out">—</pre>
+  <script>
+    go.onclick = async () => {
+      out.textContent = 'Ładowanie...';
+      try {
+        const r = await fetch(url.value, {cache:'no-store'});
+        const text = await r.text();
+        out.textContent = 'HTTP ' + r.status + '\n\n' + text.slice(0, 2000);
+      } catch(e) { out.textContent = 'Błąd: ' + e.message; }
+    };
+  </script>
+</body>
+</html>

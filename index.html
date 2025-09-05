@@ -4,10 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Raport Kredytowy</title>
-    <!-- tint Safari bars per scheme -->
     <meta name="theme-color" content="#eef3fb" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
-    <!-- iOS PWA dark status bar -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="color-scheme" content="dark light">
@@ -31,7 +29,6 @@
       * { box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
       html, body { margin:0; padding:0; background:var(--bg); color:var(--text);
         font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',Segoe UI,Roboto,Helvetica,Arial,sans-serif; overflow-x:hidden; }
-      /* fills notch area with app bg */
       .statusbar-fix { position:fixed; top:0; left:0; right:0; height: env(safe-area-inset-top); background: var(--bg); z-index: 9999; pointer-events:none; }
       .safe { padding: calc(env(safe-area-inset-top) + 12px) max(14px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); }
       .wrap { width:100%; max-width:520px; margin:0 auto; }
@@ -69,12 +66,16 @@
       .chips { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:8px; }
       .chip { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; background:var(--pill); border:1px solid var(--border); border-radius:999px; font-size:13px; }
       .chip b { font-variant-numeric: tabular-nums; }
+      .footer { display:flex; justify-content:center; gap:12px; color:var(--muted); font-size:13px; padding:8px 0; }
+      .btn { appearance:none; border:0; border-radius:12px; padding:10px 14px; font-weight:700; background:var(--accent); color:#fff; box-shadow:var(--shadow); }
+      .error{background:#3f1f1f;border:1px solid rgba(255,255,255,.12);color:#ffd1d1;padding:12px;border-radius:12px}
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
-      if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js')); }
       window.RAPORT_ENDPOINT = "https://script.google.com/macros/s/AKfycbymwnWurFrti71e3PDkm658dfRswPE-OFjTGKs24TdxYi2aS2btOPTm2Hb5xsOLe4II9w/exec?path=/api/report/json";
+      window.APP_VERSION = "v3.2.0";
     </script>
+    <script defer src="app.js?v=v3.2.0"></script>
   </head>
   <body>
     <div class="statusbar-fix"></div>
@@ -87,14 +88,13 @@
           <div class="badge" id="asOf">Ładowanie…</div>
         </header>
 
-        <!-- KPI (1 per row) -->
+        <!-- KPI -->
         <section class="grid kpi-grid">
           <div class="card"><div class="card-pad kpi"><div class="label">WIBOR 3M</div><div class="value nowrap" id="wibor">—</div></div></div>
           <div class="card"><div class="card-pad kpi"><div class="label">Obecna rata</div><div class="value nowrap" id="curr">—</div></div></div>
           <div class="card"><div class="card-pad kpi"><div class="label">Szac. nowa rata</div><div class="value nowrap" id="new">—</div></div></div>
           <div class="card"><div class="card-pad kpi"><div class="label">Różnica</div><div class="value nowrap" id="diff">—</div></div></div>
-
-          <!-- NEW: directly under "Różnica" -->
+          <!-- NOWY KAFELEK POD 'RÓŻNICA' -->
           <div class="card"><div class="card-pad kpi">
             <div class="label">Ilość pozostałych rat</div>
             <div class="value nowrap" id="raty">—</div>
@@ -142,10 +142,15 @@
           <div class="card-pad table-wrap" id="fraTableWrap"></div></div>
         </section>
 
-        <div class="center muted">PWA • Dodaj do ekranu początkowego</div>
+        <div id="errorBox" style="display:none" class="error"></div>
+
+        <div class="footer">
+          <button id="retryBtn" class="btn" style="display:none">Spróbuj ponownie</button>
+          <button id="forceRefresh" class="btn" title="Wyczyść Cache i SW">Wyczyść cache</button>
+          <a class="muted" href="./diag.html">Diag</a>
+        </div>
+
       </div>
     </div>
-
-    <script src="app.js"></script>
   </body>
 </html>
