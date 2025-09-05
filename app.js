@@ -1,4 +1,4 @@
-// app.js (v3.5.4) — WIBOR = history[0] + akordeon z płynną animacją
+// app.js (v3.5.5) — WIBOR = history[0], akordeon z opóźnionym renderem
 
 function getCSS(property) {
   return getComputedStyle(document.documentElement).getPropertyValue(property) || '#ffffff';
@@ -10,11 +10,9 @@ function getCSS(property) {
   const PLN  = (v) => (v == null ? "-" : Number(v).toFixed(2) + NBSP + "zł");
   const monthsPL = ["Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec","Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień"];
 
-  // stan globalny
   let LAST_DATA = null;
   const RENDERED = { progress:false, pie:false, wibor:false, fra:false };
 
-  // rejestr wykresów
   const CHARTS = {};
   function makeChart(canvasId, config) {
     const cvs = document.getElementById(canvasId);
@@ -42,7 +40,7 @@ function getCSS(property) {
 
   async function fetchJson(url) {
     const u = new URL(url);
-    u.searchParams.set('_t', Date.now()); // cache-buster
+    u.searchParams.set('_t', Date.now());
     const { promise, cancel } = abortableFetch(u.toString(), 12000);
     const r = await promise; cancel();
     if (!r.ok) throw new Error("HTTP " + r.status);
@@ -57,8 +55,8 @@ function getCSS(property) {
     try {
       const data = await fetchJson(window.RAPORT_ENDPOINT);
       LAST_DATA = data;
-      renderKPI(data);      // KPI od razu
-      setupAccordions();    // przełączniki
+      renderKPI(data);
+      setupAccordions();
     } catch (e) {
       showError("Nie udało się pobrać raportu: " + e.message);
       console.error(e);
@@ -70,8 +68,7 @@ function getCSS(property) {
     const btn = id("retryBtn");
     if (!msg) { box.style.display = "none"; btn.style.display = "none"; return; }
     box.style.display = "block";
-    const pad = box.querySelector(".pad");
-    if (pad) pad.textContent = msg; else box.textContent = msg;
+    box.textContent = msg;
     btn.style.display = "inline-block";
     btn.onclick = load;
   }
@@ -80,7 +77,6 @@ function getCSS(property) {
   function renderKPI(data){
     id("asOf").textContent = "Stan na " + (data.asOf || "—");
 
-    // WIBOR = ostatni odczyt z historii
     const latestFromHistory = Array.isArray(data.history) && data.history[0]
       ? Number(data.history[0][1])
       : null;
@@ -137,7 +133,7 @@ function getCSS(property) {
     RENDERED.fra = true;
   }
 
-  // ===== akordeon =====
+  // ===== akordeon z opóźnieniem renderu =====
   function setupAccordions(){
     document.querySelectorAll('.acc-head').forEach(btn=>{
       const targetId = btn.dataset.target;
@@ -150,10 +146,12 @@ function getCSS(property) {
         if (!isOpen) {
           panel.classList.add("open");
           if (LAST_DATA) {
-            if (targetId === "acc-progress") renderProgress(LAST_DATA);
-            if (targetId === "acc-pie")      renderPie(LAST_DATA);
-            if (targetId === "acc-wibor")    renderWibor(LAST_DATA);
-            if (targetId === "acc-fra")      renderFra(LAST_DATA);
+            setTimeout(() => {
+              if (targetId === "acc-progress") renderProgress(LAST_DATA);
+              if (targetId === "acc-pie")      renderPie(LAST_DATA);
+              if (targetId === "acc-wibor")    renderWibor(LAST_DATA);
+              if (targetId === "acc-fra")      renderFra(LAST_DATA);
+            }, 350); // opóźnienie ≈ czas animacji
           }
         } else {
           panel.classList.remove("open");
@@ -169,7 +167,6 @@ function getCSS(property) {
   // ===== wykresy =====
   function safePie(interest, principal){
     try{
-      const ctx = document.getElementById('pieChart');
       makeChart('pieChart', {
         type:'doughnut',
         data:{
@@ -181,8 +178,8 @@ function getCSS(property) {
     }catch(e){ console.warn('Pie chart skipped:', e); }
   }
 
-  function safeWiborChart(rows){ /* ... jak wcześniej (tabela + wykres) */ }
-  function safeFraChart(rows){ /* ... jak wcześniej (tabela + wykres) */ }
+  function safeWiborChart(rows){ /* tabela + wykres */ }
+  function safeFraChart(rows){ /* tabela + wykres */ }
 
   // ===== hard refresh =====
   async function hardRefresh() {
