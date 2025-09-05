@@ -12,21 +12,21 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <style>
       :root {
-        --bg: #0b1220;
-        --card: #0f172a;
-        --border: rgba(255,255,255,0.08);
-        --text: #e5e7eb;
-        --muted: #9ca3af;
-        --accent: #4f9cf9;
-        --accent-2: #22c55e;
-        --pill: rgba(255,255,255,0.06);
-        --shadow: 0 10px 30px rgba(0,0,0,0.35);
+        --bg: #f4f7fb;
+        --card: #ffffff;
+        --border: #e9edf3;
+        --text: #0f172a;
+        --muted: #64748b;
+        --accent: #3b82f6;       /* główny niebieski */
+        --accent-2: #93c5fd;     /* drugi odcień niebieskiego */
+        --pill: #f1f5f9;
+        --shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
         --radius-xl: 22px;
       }
-      @media (prefers-color-scheme: light) {
+      @media (prefers-color-scheme: dark) {
         :root {
-          --bg:#f2f4f8; --card:#ffffff; --border:#e6e9ef; --text:#111827; --muted:#6b7280;
-          --pill:#f3f4f6; --shadow:0 10px 24px rgba(17,24,39,0.08);
+          --bg:#0b1220; --card:#0f172a; --border: rgba(255,255,255,0.08); --text:#e5e7eb; --muted:#94a3b8;
+          --pill: rgba(255,255,255,0.06); --shadow: 0 10px 30px rgba(0,0,0,0.35);
         }
       }
       * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -35,32 +35,31 @@
       .safe { padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
                         max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
       .wrap { max-width: 860px; margin: 0 auto; }
-      .header { background:linear-gradient(180deg, rgba(79,156,249,.25), rgba(79,156,249,0) 80%), var(--card);
-                border:1px solid var(--border); border-radius: var(--radius-xl); padding:20px 18px; box-shadow: var(--shadow); }
+      .header { background:linear-gradient(180deg, rgba(59,130,246,.12), rgba(59,130,246,0) 80%), var(--card);
+                border:1px solid var(--border); border-radius: var(--radius-xl); padding:18px; box-shadow: var(--shadow); }
       .title { display:flex; align-items:center; gap:12px; margin:0; font-weight:700; font-size:18px; }
       .badge { background:var(--pill); padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted); }
       .grid { display:grid; gap:12px; }
-      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .kpi-grid { grid-template-columns: 1fr; } /* zawsze 1 kolumna na iPhone */
+      @media (min-width: 900px) { .kpi-grid { grid-template-columns: 1fr 1fr; } }
       .card { background:var(--card); border:1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow); }
       .card-pad { padding:16px; }
-      .kpi { display:flex; flex-direction:column; align-items:center; gap:6px; }
+      .kpi { display:flex; flex-direction:column; gap:6px; }
       .kpi .label { font-size:12px; letter-spacing:.04em; color:var(--muted); text-transform:uppercase; }
-      .kpi .value { font-size:26px; font-weight:800; }
+      .kpi .value { font-size:28px; font-weight:800; }
       .section-title { display:flex; align-items:center; gap:10px; font-weight:700; margin:18px 4px 10px; }
-      .section-title .dot { width:9px; height:9px; border-radius:999px; background:var(--accent); box-shadow:0 0 0 4px rgba(79,156,249,.15); }
+      .section-title .dot { width:9px; height:9px; border-radius:999px; background:var(--accent); box-shadow:0 0 0 4px rgba(59,130,246,.15); }
       .row3 { display:grid; grid-template-columns: 1fr; gap:10px; }
-      @media (min-width: 680px) { .row3 { grid-template-columns: 1fr 1fr 1fr; } }
       .muted { color:var(--muted); font-size:14px; }
-      .progress { height:28px; background:var(--pill); border-radius:14px; overflow:hidden; border:1px solid var(--border); }
-      .progress > div { height:100%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; }
+      .progress { height:36px; background:var(--pill); border-radius:18px; overflow:hidden; border:1px solid var(--border); }
+      .progress > div { height:100%; background:linear-gradient(90deg, var(--accent), var(--accent-2)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; }
       .table-wrap { overflow-x:auto; -webkit-overflow-scrolling: touch; }
       table { border-collapse: separate; border-spacing: 0; min-width: 560px; width: 100%; }
       th, td { padding:12px 12px; text-align:left; font-size:14px; border-bottom:1px solid var(--border); }
       thead th { position:sticky; top:0; background:var(--card); z-index:1; }
       tr:last-child td { border-bottom: 0; }
-      .chip-up { color:#ef4444; background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.25); }
-      .chip-down { color:#10b981; background:rgba(16,185,129,.12); border:1px solid rgba(16,185,129,.25); }
-      .chip { font-weight:700; display:inline-block; padding:4px 9px; border-radius:999px; font-size:13px; }
+      .chip { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; background:var(--pill); border:1px solid var(--border); border-radius:999px; font-size:13px; }
+      .chip b { font-variant-numeric: tabular-nums; }
       canvas { width:100% !important; height:auto !important; }
       .footer { text-align:center; color:var(--muted); font-size:12px; margin-top:14px; }
     </style>
@@ -83,6 +82,7 @@
           </div>
         </header>
 
+        <!-- KPI -->
         <section class="grid kpi-grid">
           <div class="card"><div class="card-pad kpi"><div class="label">WIBOR 3M</div><div class="value" id="wibor">—</div></div></div>
           <div class="card"><div class="card-pad kpi"><div class="label">Obecna rata</div><div class="value" id="curr">—</div></div></div>
@@ -90,6 +90,7 @@
           <div class="card"><div class="card-pad kpi"><div class="label">Różnica</div><div class="value" id="diff">—</div></div></div>
         </section>
 
+        <!-- Postęp spłaty (bardziej widoczny) -->
         <section>
           <div class="section-title"><span class="dot"></span>Postęp spłaty</div>
           <div class="card"><div class="card-pad">
@@ -99,36 +100,43 @@
               <div class="muted">Pozostało do spłaty<br><b id="rem">—</b></div>
             </div>
             <div style="margin-top:12px;">
-              <div class="muted">Spłacono już <b id="pct">—</b> kapitału</div>
+              <div class="muted"><b id="pct">0%</b> kapitału spłacone</div>
               <div class="progress" style="margin-top:8px;"><div id="bar" style="width:0%">0%</div></div>
             </div>
           </div></div>
         </section>
 
+        <!-- Struktura raty (mniejszy wykres + kwoty) -->
         <section>
           <div class="section-title"><span class="dot"></span>Struktura najbliższej raty</div>
           <div class="card"><div class="card-pad">
-            <canvas id="pieChart" aria-label="Udział odsetek i kapitału"></canvas>
+            <div style="min-height:180px"><canvas id="pieChart" aria-label="Udział odsetek i kapitału"></canvas></div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+              <span class="chip"><span style="width:10px;height:10px;border-radius:3px;background:var(--accent);display:inline-block"></span>Odsetki: <b id="odsetki">—</b></span>
+              <span class="chip"><span style="width:10px;height:10px;border-radius:3px;background:var(--accent-2);display:inline-block"></span>Kapitał: <b id="kapital">—</b></span>
+            </div>
           </div></div>
         </section>
 
+        <!-- Historia WIBOR (ostatnie 5 dni) -->
         <section>
           <div class="section-title"><span class="dot"></span>Historia WIBOR 3M</div>
           <div class="card"><div class="card-pad">
-            <canvas id="wiborChart"></canvas>
+            <div style="min-height:180px"><canvas id="wiborChart"></canvas></div>
           </div>
           <div class="card-pad table-wrap" id="histTableWrap"></div></div>
         </section>
 
+        <!-- Prognozy FRA (liniowy, mniejszy) -->
         <section>
           <div class="section-title"><span class="dot"></span>Prognozy FRA</div>
           <div class="card"><div class="card-pad">
-            <canvas id="fraChart"></canvas>
+            <div style="min-height:180px"><canvas id="fraChart"></canvas></div>
           </div>
           <div class="card-pad table-wrap" id="fraTableWrap"></div></div>
         </section>
 
-        <div class="footer">iOS-style PWA • Dodaj do ekranu początkowego</div>
+        <div class="footer">PWA • Dodaj do ekranu początkowego</div>
       </div>
     </div>
 
