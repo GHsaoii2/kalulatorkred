@@ -8,13 +8,13 @@
   <meta name="theme-color" content="#0b1220">
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icon-192.png" sizes="192x192" type="image/png">
-
   <style>
     /* LIGHT (domyślnie) */
     :root{
       --bg:#f6f7fb; --card:#ffffff; --text:#0f172a; --accent:#2563eb;
       --good:#16a34a; --bad:#dc2626; --muted:#6b7280; --grid:#e5e7eb;
       --pill-track:#e5e7eb; --pill-border:#d1d5db;
+      --ring: 0 1px 3px rgba(0,0,0,.06), 0 6px 18px rgba(0,0,0,.08);
     }
     /* DARK */
     @media (prefers-color-scheme: dark){
@@ -22,82 +22,122 @@
         --bg:#121416; --card:#1f2937; --text:#e2e6e9; --accent:#52b0ff;
         --good:#40c09e; --bad:#e65050; --muted:#9ca3af; --grid:#2a3342;
         --pill-track:#2b2b2b; --pill-border:#313131;
+        --ring: 0 1px 2px rgba(0,0,0,.25), 0 8px 20px rgba(0,0,0,.35);
       }
     }
     *{box-sizing:border-box}
-    body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0}
+    body{
+      background:var(--bg); color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; margin:0
+    }
     main, header{max-width:640px;margin:0 auto}
-    .card{background:var(--card);border-radius:16px;margin:16px;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+    .card{
+      background:var(--card); border-radius:18px; margin:16px; padding:0;
+      box-shadow:var(--ring); border:1px solid color-mix(in oklab, var(--card), black 12%);
+    }
     .pad{padding:18px}
-
-    header .title{font-size:24px;font-weight:800;text-align:center;color:var(--accent)}
+    header .title{font-size:26px;font-weight:800;text-align:center;color:var(--accent);letter-spacing:.2px}
     #asOf{text-align:center;margin-top:6px;font-size:13px;color:var(--muted)}
-
     /* KPI */
     .kpis{display:grid;grid-template-columns:1fr;gap:12px}
-    .kpi{background:color-mix(in oklab, var(--card) 80%, black 8%);border-radius:12px;padding:14px;text-align:center;border:1px solid color-mix(in oklab, var(--card), black 14%)}
-    .kpi .label{font-size:13px;color:var(--muted);letter-spacing:.02em}
+    .kpi{
+      background:color-mix(in oklab, var(--card) 88%, black 8%);
+      border-radius:14px;padding:14px;text-align:center;
+      border:1px solid color-mix(in oklab, var(--card), black 16%);
+    }
+    .kpi .label{font-size:13px;color:var(--muted);letter-spacing:.03em}
     .kpi .val{font-size:24px;font-weight:800;margin-top:6px}
     .nowrap{white-space:nowrap}
     .value.up{color:var(--bad)} .value.down{color:var(--good)}
-
-    /* akordeon (bez animacji – stabilnie) */
+    /* Akordeon (domyślnie zamknięty, bez animacji) */
     .acc-head{
-      position:relative;width:100%;background:transparent;border:0;padding:16px 44px;
+      position:relative;width:100%;background:transparent;border:0;padding:16px 48px;
       display:flex;align-items:center;justify-content:center;gap:10px;
       color:var(--accent);font-weight:900;font-size:22px;cursor:pointer
     }
-    .acc-dot{position:absolute;left:16px;top:calc(50% - 6px);width:12px;height:12px;border-radius:50%;
-      background:color-mix(in oklab, var(--card), black 35%);transition:background .2s,box-shadow .25s}
-    .acc-head[aria-expanded="true"] .acc-dot{background:var(--good);box-shadow:0 0 10px color-mix(in oklab, var(--good), transparent 60%)}
-    .acc-chev{position:absolute;right:16px;top:50%;transform:translateY(-50%) rotate(-45deg);
-      width:10px;height:10px;border-right:2px solid var(--accent);border-bottom:2px solid var(--accent);transition:transform .2s}
+    .acc-dot{
+      position:absolute;left:16px;top:calc(50% - 6px);width:12px;height:12px;border-radius:50%;
+      background:color-mix(in oklab, var(--card), black 35%);transition:background .2s,box-shadow .25s
+    }
+    .acc-head[aria-expanded="true"] .acc-dot{
+      background:var(--good); box-shadow:0 0 0 6px color-mix(in oklab, var(--good), transparent 85%);
+    }
+    .acc-chev{
+      position:absolute;right:18px;top:50%;transform:translateY(-50%) rotate(-45deg);
+      width:12px;height:12px;border-right:3px solid var(--accent);border-bottom:3px solid var(--accent);
+      transition:transform .2s
+    }
     .acc-head[aria-expanded="true"] .acc-chev{transform:translateY(-50%) rotate(45deg)}
     .acc-body{display:none}
     .acc-body.open{display:block}
-
     /* Postęp spłaty – kafelek */
     .progress-card{padding-top:6px}
     .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0 14px}
     @media (max-width:360px){ .stat-grid{grid-template-columns:1fr} }
-    .stat{background:color-mix(in oklab, var(--card) 85%, black 10%);border:1px solid color-mix(in oklab, var(--card), black 18%);border-radius:14px;padding:12px 14px}
+    .stat{
+      background:color-mix(in oklab, var(--card) 85%, black 10%);
+      border:1px solid color-mix(in oklab, var(--card), black 18%);
+      border-radius:14px;padding:12px 14px
+    }
     .stat .stat-label{font-size:12px;letter-spacing:.02em;color:var(--muted)}
     .stat .stat-value{margin-top:4px;font-size:18px;font-weight:800;color:var(--text);white-space:nowrap}
-
-    .pill{position:relative;height:28px;background:var(--pill-track);border-radius:999px;overflow:hidden;border:1px solid var(--pill-border)}
-    .pill .fill{height:100%;width:0%;background:linear-gradient(90deg,#1D4ED8,#60A5FA);border-radius:inherit;transition:width 900ms ease}
-    .pill .label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-      font-weight:800;color:#fff;pointer-events:none;user-select:none;text-shadow:0 1px 1px rgba(0,0,0,.35)}
+    .pill{
+      position:relative;height:30px;background:var(--pill-track);border-radius:999px;overflow:hidden;
+      border:1px solid var(--pill-border)
+    }
+    .pill .fill{
+      height:100%;width:0%;
+      background:linear-gradient(90deg,#1D4ED8,#60A5FA);
+      border-radius:inherit;transition:width 900ms cubic-bezier(.22,1,.36,1)
+    }
+    .pill .label{
+      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      font-weight:900;color:#fff;pointer-events:none;user-select:none;text-shadow:0 1px 1px rgba(0,0,0,.35)
+    }
     .progress-foot{margin-top:8px;font-size:13px;color:var(--muted);text-align:center}
-
-    /* wykresy */
+    /* wykresy – mniejsze, spójne */
     .chart-box{display:flex;justify-content:center}
-    canvas.chart-sm{width:320px;height:180px!important;max-width:100%}
-
-    /* tabele */
-    table.tbl{width:100%;border-collapse:collapse;border:1px solid color-mix(in oklab, var(--card), black 22%);border-radius:12px;overflow:hidden}
-    .tbl th,.tbl td{padding:12px 14px;border:1px solid color-mix(in oklab, var(--card), black 22%);font-size:14px;text-align:center;vertical-align:middle;white-space:nowrap}
-    .tbl th{background:color-mix(in oklab, var(--card), black 30%);color:var(--text);font-weight:700}
-
-    #errorBox{color:#ff6b6b;background:#2d1b1b;padding:14px;text-align:center;display:none;margin:16px;border-radius:8px;border:1px solid #ff6b6b}
+    canvas.chart-sm{width:320px;height:170px!important;max-width:100%}
+    /* Tabele (dopasowane do kafelka) */
+    .table-scroll{overflow:auto; -webkit-overflow-scrolling:touch}
+    table.tbl{
+      width:100%;border-collapse:collapse;border:1px solid color-mix(in oklab, var(--card), black 22%);
+      border-radius:12px;overflow:hidden; table-layout:fixed; min-width:480px;
+    }
+    .tbl th,.tbl td{
+      padding:12px 14px;border:1px solid color-mix(in oklab, var(--card), black 22%);
+      font-size:14px;text-align:center;vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+    }
+    .tbl th{
+      position:sticky; top:0;
+      background:color-mix(in oklab, var(--card), black 30%); color:var(--text); font-weight:800; z-index:1
+    }
+    .tbl tbody tr:nth-child(even){background:color-mix(in oklab, var(--card) 92%, black 6%)}
+    .tbl tbody tr:hover{background:color-mix(in oklab, var(--card) 86%, black 10%)}
+    .tbl th:nth-child(1){width:42%}  /* miesiąc/data */
+    .tbl th:nth-child(2){width:33%}  /* rata / wartość */
+    .tbl th:nth-child(3){width:25%}  /* zmiana */
+    @media (max-width:390px){
+      .tbl th,.tbl td{padding:10px 10px; font-size:13px}
+    }
+    #errorBox{
+      color:#ff6b6b;background:#2d1b1b;padding:14px;text-align:center;display:none;margin:16px;
+      border-radius:8px;border:1px solid #ff6b6b
+    }
   </style>
-
-  <script>
-    // Podbijaj wersję przy każdym deployu
-    window.APP_VERSION='v3.7.0';
-    window.RAPORT_ENDPOINT='https://script.google.com/macros/s/AKfycbymwnWurFrti71e3PDkm658dfRswPE-OFjTGKs24TdxYi2aS2btOPTm2Hb5xsOLe4II9w/exec?path=/api/report/json';
-  </script>
-
-  <!-- Chart.js (pin) -->
+  <!-- Chart.js - POPRAWIONE -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
-
-  <!-- Rejestracja Service Workera (cache bust + auto-refresh) -->
+  <!-- Konfiguracja - POPRAWIONE -->
+  <script>
+    window.APP_VERSION = 'v3.7.0';
+    window.RAPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbymwnWurFrti71e3PDkm658dfRswPE-OFjTGKs24TdxYi2aS2btOPTm2Hb5xsOLe4II9w/exec?path=/api/report/json';
+  </script>
+  <!-- Service Worker - DODANE -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', async () => {
         try {
           const reg = await navigator.serviceWorker.register('./sw.js?v='+encodeURIComponent(window.APP_VERSION));
-          // auto refresh po aktualizacji SW
           reg.addEventListener('updatefound', () => {
             const nw = reg.installing;
             if (!nw) return;
@@ -108,97 +148,109 @@
               }
             });
           });
-          setTimeout(()=>reg.update().catch(()=>{}), 2000);
         } catch(e){ /* cicho */ }
       });
     }
   </script>
 </head>
 <body>
+  <!-- Nagłówek -->
   <header class="card">
     <div class="pad">
       <div class="title">📊 Raport Kredytowy</div>
       <div id="asOf">Ładowanie…</div>
     </div>
   </header>
-
   <main>
     <!-- KPI -->
     <section class="card">
       <div class="pad">
         <div class="kpis">
-          <div class="kpi"><div class="label">WIBOR 3M</div><div id="wibor" class="val">–</div></div>
-          <div class="kpi"><div class="label">Obecna rata</div><div id="curr" class="val">–</div></div>
-          <div class="kpi"><div class="label">Szacowana rata</div><div id="new" class="val">–</div></div>
-          <div class="kpi"><div class="label">Różnica</div><div id="diff" class="val nowrap">–</div></div>
-          <div class="kpi"><div class="label">Pozostało rat</div><div id="raty" class="val">–</div><small id="ratySub"></small></div>
+          <div class="kpi"><div class="label">WIBOR 3M</div><div id="wibor" class="val">—</div></div>
+          <div class="kpi"><div class="label">Obecna rata</div><div id="curr" class="val">—</div></div>
+          <div class="kpi"><div class="label">Szacowana rata</div><div id="new" class="val">—</div></div>
+          <div class="kpi"><div class="label">Różnica</div><div id="diff" class="val nowrap">—</div></div>
+          <div class="kpi"><div class="label">Pozostało rat</div><div id="raty" class="val">—</div><small id="ratySub"></small></div>
         </div>
       </div>
     </section>
-
-    <!-- Postęp spłaty -->
+    <!-- Postęp spłaty (domyślnie zamknięty) -->
     <section class="card">
-      <button class="acc-head" data-target="acc-progress" aria-expanded="true">
+      <button class="acc-head" data-target="acc-progress" aria-expanded="false">
         <span class="acc-dot"></span> Postęp spłaty <span class="acc-chev"></span>
       </button>
-      <div id="acc-progress" class="acc-body open progress-card">
-        <div class="pad">
+      <div id="acc-progress" class="acc-body">
+        <div class="pad progress-card">
           <div class="stat-grid">
-            <div class="stat"><div class="stat-label">Kapitał początkowy</div><div class="stat-value"><span id="init">–</span></div></div>
-            <div class="stat"><div class="stat-label">Kapitał spłacony</div><div class="stat-value"><span id="paid">–</span></div></div>
-            <div class="stat"><div class="stat-label">Pozostało do spłaty</div><div class="stat-value"><span id="rem">–</span></div></div>
-            <div class="stat"><div class="stat-label">Spłacono</div><div class="stat-value"><span id="pct">0%</span></div></div>
+            <div class="stat">
+              <div class="stat-label">Kapitał początkowy</div>
+              <div class="stat-value" id="init">—</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Kapitał spłacony</div>
+              <div class="stat-value" id="paid">—</div>
+            </div>
+            <div class="stat" style="grid-column:1 / -1">
+              <div class="stat-label">Pozostało do spłaty</div>
+              <div class="stat-value" id="rem">—</div>
+            </div>
           </div>
-          <div class="pill" aria-label="Spłacono procent kapitału">
-            <div id="bar" class="fill"></div>
+          <div class="pill">
+            <!-- POPRAWIONE ID: -->
+            <div id="bar" class="fill" style="width:0%"></div>
             <div id="barLabel" class="label">0%</div>
           </div>
-          <div class="progress-foot">To odsetek spłaconego kapitału w całym kredycie</div>
+          <div class="progress-foot">Spłacono <span id="pct"></span></div>
         </div>
       </div>
     </section>
-
-    <!-- Struktura raty -->
+    <!-- Struktura najbliższej raty (domyślnie zamknięta) -->
     <section class="card">
-      <button class="acc-head" data-target="acc-pie" aria-expanded="true">
+      <button class="acc-head" data-target="acc-pie" aria-expanded="false">
         <span class="acc-dot"></span> Struktura najbliższej raty <span class="acc-chev"></span>
       </button>
-      <div id="acc-pie" class="acc-body open">
+      <div id="acc-pie" class="acc-body">
         <div class="pad" style="text-align:center">
           <div class="chart-box"><canvas id="pieChart" class="chart-sm"></canvas></div>
-          <div style="margin-top:10px">Odsetki: <span id="odsetki">–</span> &nbsp;|&nbsp; Kapitał: <span id="kapital">–</span></div>
+          <div style="margin-top:10px">
+            Odsetki: <span id="odsetki">—</span> &nbsp;|&nbsp; Kapitał: <span id="kapital">—</span>
+          </div>
         </div>
       </div>
     </section>
-
-    <!-- Historia WIBOR -->
+    <!-- Historia WIBOR 3M (domyślnie zamknięta, wykres + tylko 5 rekordów) -->
     <section class="card">
-      <button class="acc-head" data-target="acc-wibor" aria-expanded="true">
+      <button class="acc-head" data-target="acc-wibor" aria-expanded="false">
         <span class="acc-dot"></span> Historia WIBOR 3M <span class="acc-chev"></span>
       </button>
-      <div id="acc-wibor" class="acc-body open">
+      <div id="acc-wibor" class="acc-body">
         <div class="pad">
           <div class="chart-box"><canvas id="wiborChart" class="chart-sm"></canvas></div>
-          <div id="histTableWrap"></div>
+          <div class="table-scroll"><div id="histTableWrap"></div></div>
         </div>
       </div>
     </section>
-
-    <!-- Prognozy FRA -->
+    <!-- Prognozy FRA (domyślnie zamknięte, poprawiona tabela) -->
     <section class="card">
-      <button class="acc-head" data-target="acc-fra" aria-expanded="true">
+      <button class="acc-head" data-target="acc-fra" aria-expanded="false">
         <span class="acc-dot"></span> Prognozy FRA <span class="acc-chev"></span>
       </button>
-      <div id="acc-fra" class="acc-body open">
+      <div id="acc-fra" class="acc-body">
         <div class="pad">
           <div class="chart-box"><canvas id="fraChart" class="chart-sm"></canvas></div>
-          <div id="fraTableWrap"></div>
+          <div class="table-scroll"><div id="fraTableWrap"></div></div>
         </div>
       </div>
     </section>
   </main>
-
+  <!-- Błędy / retry -->
   <div id="errorBox"></div>
+  <div style="text-align:center;margin:20px">
+    <button id="retryBtn" style="display:none;padding:12px 24px;background:#52b0ff;border:none;color:#fff;border-radius:8px;font-weight:600;cursor:pointer">
+      🔄 Spróbuj ponownie
+    </button>
+  </div>
+  <!-- Logika - POPRAWIONE -->
   <script src="./app.js?v=v3.7.0" defer></script>
 </body>
 </html>
