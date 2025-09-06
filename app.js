@@ -1,261 +1,300 @@
-// app.js — stabilny UI (bez animacji wysokości), wykresy + tabele
+// app.js — v3.7.0
 (function () {
-  // ===== Helpers
-  const id = (s) => document.getElementById(s);
-  const NBSP = "\u00A0";
-  const PLN = (v) => (v == null ? "–" : Number(v).toFixed(2) + NBSP + "zł");
-  const monthsPL = ["Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec","Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień"];
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const num = (x) => { const n = Number(x); return isNaN(n) ? null : n; };
+  // ================== helpers ==================
+  const $ = (id) => document.getElementById(id);
+  const NBSP = '\u00A0';
+  const PLN = (v) => (v == null ? '—' : Number(v).toFixed(2) + NBSP + 'zł');
+  const monthsPL = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
   
-  // wykresy — rejestr aby nie dublować instancji
+  function num(x){ const n = Number(x); return Number.isFinite(n) ? n : null; }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  
+  // Chart registry
   const CHARTS = {};
-  function makeChart(canvasId, cfg) {
-    const cvs = id(canvasId);
-    if (!cvs || !window.Chart) return null;
-    try {
+  function makeChart(canvasId, config){
+    const cvs = $(canvasId);
+    if(!cvs || !window.Chart) return null;
+    try{
       if (CHARTS[canvasId]) CHARTS[canvasId].destroy();
-      CHARTS[canvasId] = new Chart(cvs, cfg);
+      CHARTS[canvasId] = new Chart(cvs, config);
       return CHARTS[canvasId];
-    } catch (e) { console.warn("Chart error:", canvasId, e); return null; }
-  }
-  
-  function ratyWord(n){
-    n = Math.abs(Math.floor(n||0));
-    const last = n%10, last2 = n%100;
-    if (n===1) return 'rata';
-    if (last>=2 && last<=4 && !(last2>=12 && last2<=14)) return 'raty';
-    return 'rat';
+    }catch(e){ console.warn('Chart error', canvasId, e); return null; }
   }
 
-  // ===== Theme Detection (NOWE!)
-  function setupThemeDetection() {
-    const updateTheme = (isDark) => {
-      const root = document.documentElement;
-      if (isDark) {
-        root.style.setProperty('--bg', '#0a0e1a');
-        root.style.setProperty('--card', '#1a202c');
-        root.style.setProperty('--text', '#f7fafc');
-        root.style.setProperty('--muted', '#a0aec0');
-        console.log('🌙 Dark mode');
-      } else {
-        root.style.setProperty('--bg', '#ffffff');
-        root.style.setProperty('--card', '#f8fafc');
-        root.style.setProperty('--text', '#1a202c');
-        root.style.setProperty('--muted', '#64748b');
-        console.log('☀️ Light mode');
-      }
-    };
-    
-    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    updateTheme(isDark);
-    window.matchMedia('(prefers-color-scheme: dark)')
-      .addEventListener('change', (e) => updateTheme(e.matches));
-  }
-
-  // ===== Mock Data (NOWE!)
+  // ================== Mock data fallback ==================
   const MOCK_DATA = {
-    wibor3m: 4.77, currentInstallment: 5173.10, newInstallment: 5173.10,
-    asOf: "2025-09-06", monthsRemaining: 180, capitalPaidPct: 15.5,
-    initialLoan: 400000, capitalPaid: 62000, remainingLoan: 338000,
+    wibor3m: 4.77,
+    currentInstallment: 5173.10,
+    newInstallment: 5173.10,
+    asOf: "2025-09-06",
+    monthsRemaining: 180,
+    capitalPaidPct: 15.5,
+    initialLoan: 400000,
+    capitalPaid: 62000,
+    remainingLoan: 338000,
     installmentParts: { interest: 4465.56, principal: 707.54 },
-    history: [["2025-09-05", 4.77, -0.02], ["2025-09-04", 4.79, -0.02]],
-    fraProjections: [["Październik 2025", 5150.20, -22.90]]
+    history: [
+      ["2025-09-05", 4.77, -0.02],
+      ["2025-09-04", 4.79, -0.02],
+      ["2025-09-03", 4.81, -0.01],
+      ["2025-09-02", 4.82, 0.00],
+      ["2025-09-01", 4.82, 0.00]
+    ],
+    fraProjections: [
+      ["Październik 2025", 5150.20, -22.90],
+      ["Listopad 2025", 5145.10, -5.10],
+      ["Grudzień 2025", 5140.50, -4.60]
+    ]
   };
   
-  // ===== Fetch z timeoutem oraz cache:no-store
-  function abortableFetch(url, ms=15000){
+  // ================== fetch ==================
+  function abortableFetch(url, ms=12000){
     const ctrl = new AbortController();
     const t = setTimeout(()=>ctrl.abort(), ms);
-    return { promise: fetch(url, {cache:'no-store', signal:ctrl.signal}), cancel:()=>clearTimeout(t) };
+    return { promise: fetch(url, { cache:'no-store', signal: ctrl.signal }), cancel: ()=>clearTimeout(t) };
   }
   
   async function fetchJson(url){
     const u = new URL(url);
-    u.searchParams.set('v', window.APP_VERSION||'v');
+    u.searchParams.set('v', (window.APP_VERSION||'v'));
     u.searchParams.set('_t', Date.now());
     const {promise, cancel} = abortableFetch(u.toString(), 15000);
     const r = await promise; cancel();
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const txt = await r.text();
     try { return JSON.parse(txt); }
-    catch(e){ throw new Error('Niepoprawny JSON: ' + txt.slice(0, 180) + '…'); }
+    catch(e){ throw new Error('Niepoprawny JSON: ' + txt.slice(0,180) + '…'); }
   }
   
-  // ===== Error / retry
-  function showError(msg){
-    const box = id('errorBox');
-    if (!msg){ box.style.display='none'; return; }
-    box.textContent = msg;
-    box.style.display='block';
-  }
-  
-  // ===== Render (BEZ ZMIAN - działa dobrze)
-  function render(data){
-    id('asOf').textContent = 'Stan na ' + (data.asOf||'—');
-    // WIBOR = ostatni odczyt z historii (spójność)
-    let wiborFromHistory = null;
-    if (Array.isArray(data.history) && data.history.length){
-      const v = Number(data.history[0][1]);
-      if (!isNaN(v)) wiborFromHistory = v;
-    }
-    const wibor = wiborFromHistory!=null ? wiborFromHistory : num(data.wibor3m);
-    id('wibor').textContent = (wibor!=null ? wibor.toFixed(2)+'%' : '–');
+  // ================== render ==================
+  function renderAll(data){
+    console.log('🎨 Rendering data...');
     
-    // KPI: raty
+    // header
+    $('asOf').textContent = 'Stan na ' + (data.asOf || '—');
+    
+    // WIBOR z ostatniego wpisu historii
+    const last5 = Array.isArray(data.history) ? data.history.slice(0,5) : [];
+    const wiborLatest = last5.length ? Number(last5[0][1]) : num(data.wibor3m);
+    $('wibor').textContent = (wiborLatest != null ? wiborLatest.toFixed(2) + '%' : '—');
+    
+    // KPI
     const curr = num(data.currentInstallment);
     const next = num(data.newInstallment);
-    id('curr').textContent = PLN(curr);
-    id('new').textContent  = PLN(next);
+    $('curr').textContent = PLN(curr);
+    $('new').textContent  = PLN(next);
     const diff = (next||0) - (curr||0);
-    const diffNode = id('diff');
-    diffNode.textContent = (diff>0?'▲ +':'▼ ') + Math.abs(diff).toFixed(2) + NBSP + 'zł';
-    diffNode.className = 'val nowrap value ' + (diff>0?'up':'down');
+    const diffEl = $('diff');
+    diffEl.textContent = (diff > 0 ? '▲ +' : '▼ ') + Math.abs(diff).toFixed(2) + NBSP + 'zł';
+    diffEl.className = 'val nowrap value ' + (diff > 0 ? 'up' : 'down');
     
-    // Pozostałe raty
+    // pozostałe raty
     const monthsRemaining = num(data.monthsRemaining) || 0;
-    if (monthsRemaining>0){
-      id('raty').textContent = monthsRemaining + NBSP + ratyWord(monthsRemaining);
+    if (monthsRemaining > 0){
+      $('raty').textContent = monthsRemaining + NBSP + ratyWord(monthsRemaining);
       const today = new Date();
-      const last = new Date(today.getFullYear(), today.getMonth()+monthsRemaining, 1);
-      id('ratySub').textContent = 'ostatnia rata: ' + monthsPL[last.getMonth()] + ' ' + last.getFullYear();
-    } else { id('raty').textContent='–'; id('ratySub').textContent=''; }
+      const last = new Date(today.getFullYear(), today.getMonth() + monthsRemaining, 1);
+      $('ratySub').textContent = 'ostatnia rata: ' + monthsPL[last.getMonth()] + ' ' + last.getFullYear();
+    } else {
+      $('raty').textContent = '—';
+      $('ratySub').textContent = '';
+    }
     
-    // Postęp spłaty
-    const pct = clamp((num(data.capitalPaidPct)||0),0,100);
-    id('bar').style.width = pct.toFixed(1)+'%';
-    id('barLabel').textContent = pct.toFixed(1)+'%';
-    id('init').textContent = PLN(num(data.initialLoan));
-    id('paid').textContent = PLN(num(data.capitalPaid));
-    id('rem').textContent  = PLN(num(data.remainingLoan));
-    id('pct').textContent  = pct.toFixed(1)+'%';
+    // postęp spłaty - POPRAWIONE ID
+    $('init').textContent = PLN(num(data.initialLoan));
+    $('paid').textContent = PLN(num(data.capitalPaid));
+    $('rem').textContent  = PLN(num(data.remainingLoan));
+    const pct = clamp((num(data.capitalPaidPct)||0), 0, 100);
+    $('bar').style.width = pct.toFixed(1) + '%'; // ← POPRAWIONE z barFill na bar
+    $('barLabel').textContent = pct.toFixed(1) + '%';
+    $('pct').textContent = pct.toFixed(1) + '%'; // ← POPRAWIONE - zgodne z HTML
     
-    // Wykresy
-    safePie(num(data.installmentParts?.interest), num(data.installmentParts?.principal));
-    safeWiborChart(data.history||[]);
-    safeFra(data.fraProjections||[]);
+    // wykres Struktura raty
+    const interest = num(data.installmentParts?.interest) || 0;
+    const principal = num(data.installmentParts?.principal) || 0;
+    makeChart('pieChart', {
+      type:'doughnut',
+      data:{
+        labels:['Odsetki','Kapitał'],
+        datasets:[{ data:[interest, principal], borderWidth:0, backgroundColor:['#3b82f6','#93c5fd'] }]
+      },
+      options:{ plugins:{ legend:{ labels:{ color:getTextColor() } } }, cutout:'60%', responsive:true, maintainAspectRatio:false }
+    });
+    $('odsetki').textContent = PLN(interest);
+    $('kapital').textContent = PLN(principal);
+    
+    // WIBOR – tylko 5 ostatnich
+    renderWibor(last5);
+    
+    // FRA
+    renderFRA(Array.isArray(data.fraProjections) ? data.fraProjections : []);
+    
+    console.log('✅ Rendering complete');
   }
   
-  // ===== Wykresy / Tabele (WERSJA Z QUERY - LEPSZA)
-  function safePie(interest, principal){
-    try{
-      makeChart('pieChart', {
-        type:'doughnut',
-        data:{
-          labels:['Odsetki','Kapitał'],
-          datasets:[{ data:[interest||0, principal||0], borderWidth:0, backgroundColor:['#3b82f6','#93c5fd'] }]
+  function ratyWord(n){
+    n = Math.abs(Math.floor(n||0));
+    const last = n % 10, last2 = n % 100;
+    if (n === 1) return 'rata';
+    if (last>=2 && last<=4 && !(last2>=12 && last2<=14)) return 'raty';
+    return 'rat';
+  }
+  
+  function getTextColor(){
+    return getComputedStyle(document.documentElement).getPropertyValue('--text') || '#e2e6e9';
+  }
+  
+  function renderWibor(rows){
+    const wrap = $('histTableWrap');
+    if (!rows.length){ wrap.innerHTML = '<p>Brak danych historycznych</p>'; return; }
+    
+    // wykres
+    const chartRows = rows.slice().reverse();
+    makeChart('wiborChart', {
+      type:'line',
+      data:{
+        labels: chartRows.map(r => r[0]),
+        datasets:[{
+          data: chartRows.map(r => Number(r[1])),
+          borderColor:'#60A5FA',
+          backgroundColor:'rgba(96,165,250,.20)',
+          borderWidth:3, tension:.35, pointRadius:4, pointBackgroundColor:'#60A5FA', fill:true
+        }]
+      },
+      options:{
+        plugins:{ legend:{ display:false } },
+        scales:{
+          x:{ ticks:{ color:getTextColor(), maxRotation:45, minRotation:45 } },
+          y:{ ticks:{ color:getTextColor(), callback:v=> (typeof v==='number'? v.toFixed(2):v) } }
         },
-        options:{
-          cutout:'58%',
-          plugins:{ legend:{ labels:{ color:'#cdd6e0', boxWidth:18 } } },
-          maintainAspectRatio:false
-        }
-      });
-      id('odsetki').textContent = PLN(interest||0);
-      id('kapital').textContent = PLN(principal||0);
-    }catch(e){ /* brak Chart.js */ }
-  }
-  
-  function safeWiborChart(rows){
-    try{
-      // wykres z ostatnich 5 dni (chronologicznie)
-      const m = rows.slice(0,5).map(r=>[String(r[0]), Number(r[1])]).reverse();
-      const labels = m.map(x=>x[0]);
-      const values = m.map(x=>x[1]);
-      makeChart('wiborChart', {
-        type:'line',
-        data:{ labels, datasets:[{ data:values, borderColor:'#60A5FA', backgroundColor:'rgba(96,165,250,.20)', tension:.35, pointRadius:4, pointBackgroundColor:'#60A5FA', fill:true }] },
-        options:{ plugins:{ legend:{display:false}}, scales:{ x:{ticks:{color:'#cdd6e0'},grid:{color:'rgba(255,255,255,.06)'}}, y:{ticks:{color:'#cdd6e0', callback:v=> (typeof v==='number'? v.toFixed(2):v)},grid:{color:'rgba(255,255,255,.06)'}}}, maintainAspectRatio:false }
-      });
-      
-      // tabela (12 pozycji) - LEPSZA WERSJA
-      const wrap = id('histTableWrap');
-      if (!rows.length){ wrap.innerHTML = '<p>Brak danych historycznych</p>'; return; }
-      const view = rows.slice(0,12);
-      let html = '<table class="tbl"><thead><tr><th>Data</th><th>WIBOR 3M (%)</th><th>Zmiana</th></tr></thead><tbody>';
-      for (const r of view){
-        const d = String(r[0]);
-        const val = Number(r[1]);
-        const ch = Number(r[2]||0);
-        const sym = ch>0?'▲':(ch<0?'▼':'▬');
-        const color = ch<0?'#16a34a':(ch>0?'#dc2626':'#6b7280');
-        html += `<tr>
-          <td><span style="white-space:nowrap">${d}</span></td>
-          <td><strong>${val.toFixed(2)}%</strong></td>
-          <td><span style="white-space:nowrap;color:${color};font-weight:700">${sym} ${Math.abs(ch).toFixed(2)}</span></td>
-        </tr>`;
+        responsive:true, maintainAspectRatio:false
       }
-      html += '</tbody></table>';
-      wrap.innerHTML = html;
-    }catch(e){ console.warn('WIBOR chart/table error', e); }
+    });
+    
+    // tabela
+    let html = '<table class="tbl"><thead><tr>'+
+      '<th>Data</th><th>WIBOR 3M (%)</th><th>Zmiana</th></tr></thead><tbody>';
+    rows.forEach(r=>{
+      const d = r[0]; const val = Number(r[1]); const ch = Number(r[2]||0);
+      const sym = ch > 0 ? '▲' : (ch < 0 ? '▼' : '▬');
+      const color = ch < 0 ? 'var(--good)' : (ch > 0 ? 'var(--bad)' : 'var(--muted)');
+      html += `<tr><td>${d}</td>
+                   <td><b>${val.toFixed(2)}%</b></td>
+                   <td style="color:${color};font-weight:700">${sym} ${Math.abs(ch).toFixed(2)}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+    console.log('✅ WIBOR rendered');
   }
   
-  function safeFra(rows){
-    try{
-      const labels = rows.map(r=>String(r[0]));
-      const values = rows.map(r=>Number(r[1]||0));
-      makeChart('fraChart', {
-        type:'line',
-        data:{ labels, datasets:[{ data:values, borderColor:'#60A5FA', backgroundColor:'rgba(96,165,250,.20)', tension:.35, pointRadius:4, pointBackgroundColor:'#60A5FA', fill:true }] },
-        options:{ plugins:{ legend:{display:false}}, scales:{ x:{ticks:{color:'#cdd6e0'},grid:{color:'rgba(255,255,255,.06)'}}, y:{ticks:{color:'#cdd6e0', callback:v=> (typeof v==='number'? v.toFixed(0):v)},grid:{color:'rgba(255,255,255,.06)'}}}, maintainAspectRatio:false }
-      });
-      
-      // tabela FRA
-      const wrap = id('fraTableWrap');
-      if (!rows.length){ wrap.innerHTML = '<p>Brak prognoz FRA</p>'; return; }
-      let html = '<table class="tbl"><thead><tr><th>Miesiąc raty</th><th>Prognozowana rata</th><th>Zmiana</th></tr></thead><tbody>';
-      for (const r of rows){
-        const label = String(r[0]);
-        const val = Number(r[1]||0);
-        const ch = Number(r[2]||0);
-        const sym = ch>0?'▲':(ch<0?'▼':'▬');
-        const color = ch<0?'#16a34a':(ch>0?'#dc2626':'#6b7280');
-        html += `<tr>
-          <td><span style="white-space:nowrap">${label}</span></td>
-          <td><strong>${val.toFixed(2)}${NBSP}zł</strong></td>
-          <td><span style="white-space:nowrap;color:${color};font-weight:700">${sym} ${Math.abs(ch).toFixed(2)}${NBSP}zł</span></td>
-        </tr>`;
+  function renderFRA(rows){
+    const wrap = $('fraTableWrap');
+    if (!rows.length){ wrap.innerHTML = '<p>Brak prognoz FRA</p>'; return; }
+    
+    makeChart('fraChart', {
+      type:'line',
+      data:{
+        labels: rows.map(r => r[0]),
+        datasets:[{
+          data: rows.map(r => Number(r[1]||0)),
+          borderColor:'#60A5FA',
+          backgroundColor:'rgba(96,165,250,.20)',
+          borderWidth:3, tension:.35, pointRadius:4, pointBackgroundColor:'#60A5FA', fill:true
+        }]
+      },
+      options:{
+        plugins:{ legend:{ display:false } },
+        scales:{
+          x:{ ticks:{ color:getTextColor(), maxRotation:45, minRotation:45 } },
+          y:{ ticks:{ color:getTextColor(), callback:v=> (typeof v==='number'? v.toFixed(0):v) } }
+        },
+        responsive:true, maintainAspectRatio:false
       }
-      html += '</tbody></table>';
-      wrap.innerHTML = html;
-    }catch(e){ console.warn('FRA chart/table error', e); }
+    });
+    
+    let html = '<table class="tbl"><thead><tr>'+
+      '<th>Miesiąc raty</th><th>Prognozowana rata</th><th>Zmiana</th></tr></thead><tbody>';
+    rows.forEach(r=>{
+      const label = String(r[0]);
+      const val = Number(r[1]||0);
+      const ch  = Number(r[2]||0);
+      const sym = ch > 0 ? '▲' : (ch < 0 ? '▼' : '▬');
+      const color = ch < 0 ? 'var(--good)' : (ch > 0 ? 'var(--bad)' : 'var(--muted)');
+      html += `<tr>
+        <td><span style="white-space:nowrap">${label}</span></td>
+        <td><b>${val.toFixed(2)}${NBSP}zł</b></td>
+        <td style="color:${color};font-weight:700"><span style="white-space:nowrap">${sym} ${Math.abs(ch).toFixed(2)}${NBSP}zł</span></td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+    console.log('✅ FRA rendered');
   }
   
-  // ===== Akordeony (KLUCZOWA FUNKCJA!)
-  function setupAccordions(){
+  // ================== accordion ==================
+  function setupAccordion(){
     console.log('🔧 Setting up accordions...');
     document.querySelectorAll('.acc-head').forEach(btn=>{
-      const body = id(btn.getAttribute('data-target'));
+      const targetId = btn.getAttribute('data-target');
+      const body = $(targetId);
+      
+      // domyślnie zamknięte - POPRAWIONE
       const startOpen = btn.getAttribute('aria-expanded') === 'true';
-      if (startOpen) body.classList.add('open');
+      if (startOpen) {
+        body.classList.add('open');
+        body.style.display = 'block';
+      } else {
+        body.classList.remove('open');
+        body.style.display = 'none';
+      }
+      
       btn.addEventListener('click', ()=>{
         const isOpen = body.classList.toggle('open');
-        btn.setAttribute('aria-expanded', isOpen?'true':'false');
-        console.log('🔄 Accordion:', btn.getAttribute('data-target'), isOpen ? 'opened' : 'closed');
+        btn.setAttribute('aria-expanded', String(isOpen));
+        
+        // Smooth toggle
+        if (isOpen) {
+          body.style.display = 'block';
+        } else {
+          body.style.display = 'none';
+        }
+        
+        console.log('🔄 Accordion:', targetId, isOpen ? 'opened' : 'closed');
       });
     });
+    console.log('✅ Accordions setup complete');
   }
   
-  // ===== Start (POPRAWIONE!)
-  async function load(){
-    showError(null);
-    id('asOf').textContent = 'Ładowanie…';
+  // ================== boot ==================
+  async function boot(){
+    console.log('🚀 Starting app...');
+    setupAccordion();
+    
     try{
+      $('asOf').textContent = 'Ładowanie…';
       console.log('📡 Fetching from API...');
       const data = await fetchJson(window.RAPORT_ENDPOINT);
       console.log('✅ API data received');
-      render(data);
+      renderAll(data);
     }catch(e){
       console.warn('⚠️ API failed, using mock data:', e);
-      render(MOCK_DATA);
-      showError('Używam danych testowych - API niedostępne');
+      renderAll(MOCK_DATA); // ← DODANE: fallback do mock data
+      
+      const box = $('errorBox'), btn=$('retryBtn');
+      if (box) { 
+        box.textContent = 'Używam danych testowych - API niedostępne: ' + (e?.message||e); 
+        box.style.display = 'block'; 
+      }
+      if (btn) { 
+        btn.style.display = 'inline-block'; 
+        btn.onclick = ()=>{ 
+          if (box) box.style.display='none'; 
+          btn.style.display='none'; 
+          boot(); 
+        }; 
+      }
     }
   }
   
-  document.addEventListener('DOMContentLoaded', ()=>{
-    console.log('🎯 Initializing app...');
-    setupThemeDetection(); // ← NOWE: detekcja dark/light mode
-    setupAccordions();     // ← KLUCZOWE: obsługa akordeonów
-    load();                // ← Start aplikacji
-  });
+  document.addEventListener('DOMContentLoaded', boot);
 })();
