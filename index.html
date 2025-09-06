@@ -4,10 +4,14 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Raport Kredytowy</title>
-  <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#0b1220">
+
+  <!-- Meta dla jednolitego koloru górnej belki statusu iPhone -->
+  <meta name="theme-color" content="#f6f7fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121416" media="(prefers-color-scheme: dark)">
+
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icon-192.png" sizes="192x192" type="image/png">
+
   <style>
     /* LIGHT (domyślnie) */
     :root{
@@ -95,7 +99,7 @@
     .pill{
       position:relative;height:30px;background:var(--pill-track);border-radius:999px;overflow:hidden;
       border:1px solid var(--pill-border);
-      margin:0 auto; /* wyśrodkowanie */
+      margin:0 auto;
     }
     .pill .fill{
       height:100%;width:0%;
@@ -115,7 +119,7 @@
     canvas.chart-sm{width:320px;height:170px!important;max-width:100%}
     /* Responsywne tabele WIBOR/FRA */
     .table-scroll{
-      overflow-x:auto; 
+      overflow-x:auto;
       -webkit-overflow-scrolling:touch;
       max-width:100%;
       scrollbar-width:thin;
@@ -180,11 +184,14 @@
       border-radius:8px;border:1px solid #ff6b6b
     }
   </style>
+
   <script>
     window.APP_VERSION = 'v3.7.0';
     window.RAPORT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbymwnWurFrti71e3PDkm658dfRswPE-OFjTGKs24TdxYi2aS2btOPTm2Hb5xsOLe4II9w/exec?path=/api/report/json';
   </script>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
+
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', async () => {
